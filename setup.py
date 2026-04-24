@@ -33,7 +33,7 @@ setup(
                       'cdsapi', 'cartopy', 'cftime', 'jinja2', 'python-docx','statsmodels',
                       'netCDF4', 'h5netcdf', 'pytest-mock','datawrapper', 'scipy', 'dask', 'openpyxl'],
     # version number
-    version='1.3.0',
+    version='1.4.0',
     # The license can be anything you like
     license='GNU General Public License v3.0',
     description='A python package for managing climate indicator information',

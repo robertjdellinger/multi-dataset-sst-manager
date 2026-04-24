@@ -40,7 +40,7 @@ if __name__ == "__main__":
     METADATA_DIR = ROOT_DIR / "climind" / "metadata_files"
 
     hub = False
-    interactive = True
+    interactive = False
 
     minimal = False
     dash2025 = False
@@ -59,7 +59,7 @@ if __name__ == "__main__":
 
     comprehensive = False
 
-    regional = False
+    regional = True
     regional_multiyear = False
     regional_test = False
 

@@ -394,7 +394,7 @@ def test_monthly_plot(monthly_datalist, tmpdir):
     test_caption = pt.monthly_plot(tmpdir, monthly_datalist, 'test.png', 'Title words')
 
     assert 'Monthly Ocean heat content' in test_caption
-    assert '(zJ, difference from the 1961-1990 average)' in test_caption
+    assert '(ZJ, difference from the 1961-1990 average)' in test_caption
 
     assert (tmpdir / 'test.png').exists()
     assert (tmpdir / 'test.pdf').exists()
@@ -624,21 +624,21 @@ def test_generic_map(simple_monthly_grid, tmpdir):
     assert (tmpdir / 'test.png').exists()
 
     assert 'Annual Ocean heat content anomaly' in test_caption
-    assert '(zJ, difference from the 1961-1990 average)' in test_caption
+    assert '(ZJ, difference from the 1961-1990 average)' in test_caption
     assert 'Data shown are the median of the following one data sets:' in test_caption
 
     test_caption = pt.dashboard_rank_map(tmpdir, [annual_grid], 'test.png', 'title words')
     assert (tmpdir / 'test.png').exists()
 
     assert 'Annual Ocean heat content rank' in test_caption
-    assert '(zJ)' in test_caption
+    assert '(ZJ)' in test_caption
     assert 'Data shown are the median rank of the following one data sets:' in test_caption
 
     test_caption = pt.dashboard_uncertainty_map(tmpdir, [annual_grid], 'test.png', 'title words')
     assert (tmpdir / 'test.png').exists()
 
     assert 'Annual Ocean heat content uncertainty' in test_caption
-    assert '(zJ)' in test_caption
+    assert '(ZJ)' in test_caption
     assert 'Data shown are the half-range of the following one data sets:' in test_caption
 
 

@@ -122,9 +122,14 @@ def calculate_values(all_datasets: List[TimeSeriesAnnual], year: int) -> Tuple[f
             all_values.append(value.values[0])
 
     # calculate the mean trend and max and min trends
-    mean_value = float(np.mean(all_values))
-    max_value = float(np.max(all_values))
-    min_value = float(np.min(all_values))
+    if len(all_values) != 0:
+        mean_value = float(np.mean(all_values))
+        max_value = float(np.max(all_values))
+        min_value = float(np.min(all_values))
+    else:
+        mean_value = None
+        max_value = None
+        min_value = None
 
     return mean_value, min_value, max_value
 
