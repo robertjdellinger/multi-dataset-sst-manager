@@ -5,16 +5,16 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>climind.data_types.timeseries &mdash; Climind 1.3 documentation</title>
+  <title>climind.data_types.timeseries &mdash; Climind 1.4 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
-      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
 
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=c55cb9cb"></script>
-      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
-      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/documentation_options.js?v=0ed52906"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" /> 
@@ -393,7 +393,14 @@
 
 <div class="viewcode-block" id="TimeSeriesIrregular.fill_daily">
 <a class="viewcode-back" href="../../../climind.data_types.html#climind.data_types.timeseries.TimeSeriesIrregular.fill_daily">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">fill_daily</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fill_daily</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Ensure that a daily time series has data for every day between the start and end years.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s1">&#39;date&#39;</span><span class="p">)</span>
 
         <span class="n">start_date</span><span class="p">,</span> <span class="n">end_date</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_start_and_end_dates</span><span class="p">()</span>
@@ -408,7 +415,9 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">year</span> <span class="o">=</span> <span class="n">t_index</span><span class="o">.</span><span class="n">year</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">month</span> <span class="o">=</span> <span class="n">t_index</span><span class="o">.</span><span class="n">month</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">day</span> <span class="o">=</span> <span class="n">t_index</span><span class="o">.</span><span class="n">day</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">day</span> <span class="o">=</span> <span class="n">t_index</span><span class="o">.</span><span class="n">day</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_history</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Time series expanded with NaN to include all days between </span><span class="si">{</span><span class="n">start_year</span><span class="si">}</span><span class="s2"> and </span><span class="si">{</span><span class="n">final_year</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="TimeSeriesIrregular.get_climatology">
@@ -483,8 +492,8 @@
 
         <span class="n">n_time</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">])</span>
 
-        <span class="n">start_date</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
-        <span class="n">end_date</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">][</span><span class="n">n_time</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="n">start_date</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">end_date</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">n_time</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
 
         <span class="k">return</span> <span class="n">start_date</span><span class="p">,</span> <span class="n">end_date</span></div>
 
@@ -570,6 +579,20 @@
         <span class="k">return</span> <span class="n">date_range</span></div>
 
 
+<div class="viewcode-block" id="TimeSeriesIrregular.zero_on_year">
+<a class="viewcode-back" href="../../../climind.data_types.html#climind.data_types.timeseries.TimeSeriesIrregular.zero_on_year">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">zero_on_year</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">baseline_year</span><span class="p">):</span>
+        <span class="n">df_copy</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="p">)</span>
+        <span class="n">df_copy</span> <span class="o">=</span> <span class="n">df_copy</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s1">&#39;date&#39;</span><span class="p">)</span>
+        <span class="n">df2</span> <span class="o">=</span> <span class="n">df_copy</span><span class="p">[</span><span class="n">df_copy</span><span class="p">[</span><span class="s1">&#39;year&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">baseline_year</span><span class="p">]</span>
+
+        <span class="n">min_value</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span> <span class="o">*</span> <span class="n">df2</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_history</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Zeroed at first time step of </span><span class="si">{</span><span class="n">baseline_year</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_offset</span><span class="p">(</span><span class="n">min_value</span><span class="p">)</span></div>
+
+
 <div class="viewcode-block" id="TimeSeriesIrregular.rebaseline">
 <a class="viewcode-back" href="../../../climind.data_types.html#climind.data_types.timeseries.TimeSeriesIrregular.rebaseline">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">rebaseline</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">baseline_start_year</span><span class="p">,</span> <span class="n">baseline_end_year</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -615,6 +638,44 @@
             <span class="sa">f</span><span class="s1">&#39;arithmetic mean of the data over the baseline period and subtracting the mean from all data values. &#39;</span>
             <span class="sa">f</span><span class="s1">&#39;This is done for each month separately (Januarys, Februarys etc).&#39;</span>
         <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="TimeSeriesIrregular.lowess">
+<a class="viewcode-back" href="../../../climind.data_types.html#climind.data_types.timeseries.TimeSeriesIrregular.lowess">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">lowess</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">number_of_points</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">60</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Lowess smooth the series</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        number_of_points: int</span>
+<span class="sd">            Number of points to use in the lowess smoother</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">moving_average</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+        <span class="n">snippet</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">data</span><span class="p">[:]</span>
+        <span class="n">time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_year_axis</span><span class="p">()[:]</span>
+
+        <span class="n">fraction_of_data</span> <span class="o">=</span> <span class="n">number_of_points</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">snippet</span><span class="p">)</span>
+
+        <span class="n">fit</span> <span class="o">=</span> <span class="n">lowess</span><span class="p">(</span><span class="n">snippet</span><span class="p">,</span> <span class="n">time</span><span class="p">,</span> <span class="n">fraction_of_data</span><span class="p">)</span>
+
+        <span class="c1"># Smoothing is different at ends of series (effectively extrapolation) so terminate half filter width from ends</span>
+        <span class="n">fit</span> <span class="o">=</span> <span class="n">fit</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="c1"># fit[0: int(number_of_points / 2)] = np.nan</span>
+        <span class="c1"># fit[-1 * int(number_of_points / 2):] = np.nan</span>
+
+        <span class="n">moving_average</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">fit</span>
+
+        <span class="n">moving_average</span><span class="o">.</span><span class="n">update_history</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">&#39;Calculated lowess smoothed series with </span><span class="si">{</span><span class="n">fraction_of_data</span><span class="si">}</span><span class="s1"> of data used for each fit&#39;</span><span class="p">)</span>
+        <span class="n">moving_average</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;derived&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="k">return</span> <span class="n">moving_average</span></div>
 </div>
 
 
@@ -695,6 +756,14 @@
             <span class="k">return</span> <span class="n">TimeSeriesMonthly</span><span class="p">(</span><span class="n">years</span><span class="p">,</span> <span class="n">months</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="n">uncertainty</span><span class="o">=</span><span class="n">uncertainty</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">TimeSeriesMonthly</span><span class="p">(</span><span class="n">years</span><span class="p">,</span> <span class="n">months</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">metadata</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="TimeSeriesMonthly.change_end_month">
+<a class="viewcode-back" href="../../../climind.data_types.html#climind.data_types.timeseries.TimeSeriesMonthly.change_end_month">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">change_end_month</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">year</span><span class="p">,</span> <span class="n">month</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">year</span> <span class="o">*</span> <span class="mi">100</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">month</span> <span class="o">&lt;</span> <span class="n">year</span> <span class="o">*</span> <span class="mi">100</span> <span class="o">+</span> <span class="n">month</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">end_date</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_start_and_end_dates</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">dataset</span><span class="p">[</span><span class="s1">&#39;last_month&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">end_date</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="TimeSeriesMonthly.make_annual">
@@ -1750,7 +1819,8 @@
             <span class="k">for</span> <span class="n">att</span> <span class="ow">in</span> <span class="n">list_attributes</span><span class="p">:</span>
                 <span class="n">metadata</span><span class="p">[</span><span class="n">att</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="n">att</span><span class="p">])</span>
 
-    <span class="n">df_merged</span> <span class="o">=</span> <span class="n">reduce</span><span class="p">(</span><span class="k">lambda</span> <span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;year&#39;</span><span class="p">],</span> <span class="n">how</span><span class="o">=</span><span class="s1">&#39;outer&#39;</span><span class="p">,</span> <span class="n">validate</span><span class="o">=</span><span class="s1">&#39;m:m&#39;</span><span class="p">),</span> <span class="n">data_frames</span><span class="p">,)</span>
+    <span class="n">df_merged</span> <span class="o">=</span> <span class="n">reduce</span><span class="p">(</span><span class="k">lambda</span> <span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;year&#39;</span><span class="p">],</span> <span class="n">how</span><span class="o">=</span><span class="s1">&#39;outer&#39;</span><span class="p">,</span> <span class="n">validate</span><span class="o">=</span><span class="s1">&#39;m:m&#39;</span><span class="p">),</span>
+                       <span class="n">data_frames</span><span class="p">,</span> <span class="p">)</span>
 
     <span class="n">columns</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">df_merged</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
@@ -1944,7 +2014,8 @@
 <div class="viewcode-block" id="equalise_datasets">
 <a class="viewcode-back" href="../../../climind.data_types.html#climind.data_types.timeseries.equalise_datasets">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">equalise_datasets</span><span class="p">(</span>
-        <span class="n">all_datasets</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">TimeSeriesAnnual</span><span class="p">,</span> <span class="n">TimeSeriesMonthly</span><span class="p">,</span> <span class="n">TimeSeriesIrregular</span><span class="p">]]</span>
+        <span class="n">all_datasets</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">TimeSeriesAnnual</span><span class="p">,</span> <span class="n">TimeSeriesMonthly</span><span class="p">,</span> <span class="n">TimeSeriesIrregular</span><span class="p">]],</span>
+        <span class="n">uncertainty</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Given a list of datasets</span>
@@ -1976,20 +2047,26 @@
 
     <span class="n">combined_df</span> <span class="o">=</span> <span class="n">create_common_dataframe</span><span class="p">(</span><span class="n">dataframes</span><span class="p">,</span> <span class="n">monthly</span><span class="o">=</span><span class="n">monthly</span><span class="p">,</span> <span class="n">annual</span><span class="o">=</span><span class="n">annual</span><span class="p">,</span> <span class="n">irregular</span><span class="o">=</span><span class="n">irregular</span><span class="p">)</span>
 
+    <span class="n">added_columns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">uncertainty</span><span class="p">:</span>
+        <span class="n">added_columns</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;uncertainty&#39;</span><span class="p">)</span>
+
     <span class="n">on_columns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;year&#39;</span><span class="p">]</span>
     <span class="k">if</span> <span class="n">monthly</span><span class="p">:</span>
         <span class="n">on_columns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;year&#39;</span><span class="p">,</span> <span class="s1">&#39;month&#39;</span><span class="p">]</span>
     <span class="k">if</span> <span class="n">irregular</span><span class="p">:</span>
         <span class="n">on_columns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;year&#39;</span><span class="p">,</span> <span class="s1">&#39;month&#39;</span><span class="p">,</span> <span class="s1">&#39;day&#39;</span><span class="p">]</span>
-    <span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="o">*</span><span class="n">on_columns</span><span class="p">,</span> <span class="s1">&#39;data&#39;</span><span class="p">]</span>
+    <span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="o">*</span><span class="n">on_columns</span><span class="p">,</span> <span class="o">*</span><span class="n">added_columns</span><span class="p">]</span>
 
     <span class="c1"># for each dataset in the list, merge it with the combined dataframe, rename the data column and</span>
     <span class="c1"># update the combined dataframe</span>
     <span class="k">for</span> <span class="n">ds</span> <span class="ow">in</span> <span class="n">all_datasets</span><span class="p">:</span>
         <span class="n">merged_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">combined_df</span><span class="p">,</span> <span class="n">ds</span><span class="o">.</span><span class="n">df</span><span class="p">[</span><span class="n">columns</span><span class="p">],</span> <span class="n">on</span><span class="o">=</span><span class="n">on_columns</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s1">&#39;left&#39;</span><span class="p">,</span> <span class="n">validate</span><span class="o">=</span><span class="s1">&#39;m:m&#39;</span><span class="p">)</span>
         <span class="n">merged_df</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;data&#39;</span><span class="p">:</span> <span class="n">ds</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]},</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">uncertainty</span><span class="p">:</span>
+            <span class="n">merged_df</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;uncertainty&#39;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">ds</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">_uncertainty&quot;</span><span class="p">},</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">combined_df</span> <span class="o">=</span> <span class="n">merged_df</span>
-        <span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="o">*</span><span class="n">on_columns</span><span class="p">,</span> <span class="s1">&#39;data&#39;</span><span class="p">]</span>
+        <span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="o">*</span><span class="n">on_columns</span><span class="p">,</span> <span class="o">*</span><span class="n">added_columns</span><span class="p">]</span>
 
     <span class="n">combined_df</span> <span class="o">=</span> <span class="n">combined_df</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="n">on_columns</span><span class="p">,</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">combined_df</span> <span class="o">=</span> <span class="n">combined_df</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>

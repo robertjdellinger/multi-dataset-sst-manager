@@ -5,16 +5,16 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>climind.stats.paragraphs &mdash; Climind 1.3 documentation</title>
+  <title>climind.stats.paragraphs &mdash; Climind 1.4 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
-      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
 
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=c55cb9cb"></script>
-      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
-      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/documentation_options.js?v=0ed52906"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" /> 
@@ -196,7 +196,9 @@
         <span class="s2">&quot;degC&quot;</span><span class="p">:</span> <span class="s2">&quot;&amp;deg;C&quot;</span><span class="p">,</span>
         <span class="s2">&quot;millionkm2&quot;</span><span class="p">:</span> <span class="s2">&quot;million km&lt;sup&gt;2&lt;/sup&gt;&quot;</span><span class="p">,</span>
         <span class="s2">&quot;ph&quot;</span><span class="p">:</span> <span class="s2">&quot;pH&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;mwe&quot;</span><span class="p">:</span> <span class="s2">&quot;m w.e.&quot;</span>
+        <span class="s2">&quot;mwe&quot;</span><span class="p">:</span> <span class="s2">&quot; m w.e.&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;wm2&quot;</span><span class="p">:</span> <span class="s2">&quot;Wm&lt;sup&gt;-2&lt;/sup&gt;&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;zJ&quot;</span><span class="p">:</span> <span class="s2">&quot;ZJ&quot;</span>
     <span class="p">}</span>
 
     <span class="k">if</span> <span class="n">units</span> <span class="ow">in</span> <span class="n">equivalence</span><span class="p">:</span>
@@ -210,54 +212,110 @@
 
 <div class="viewcode-block" id="superlative">
 <a class="viewcode-back" href="../../../climind.stats.html#climind.stats.paragraphs.superlative">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">superlative</span><span class="p">(</span><span class="n">variable</span><span class="p">):</span>
-    <span class="n">lookup</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;tas&#39;</span><span class="p">:</span> <span class="s1">&#39;warmest&#39;</span><span class="p">}</span>
-    <span class="k">if</span> <span class="n">variable</span> <span class="ow">in</span> <span class="n">lookup</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">lookup</span><span class="p">[</span><span class="n">variable</span><span class="p">]</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">superlative</span><span class="p">(</span><span class="n">variable</span><span class="p">,</span> <span class="n">highest</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">highest</span><span class="p">:</span>
+        <span class="n">lookup</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;tas&#39;</span><span class="p">:</span> <span class="s1">&#39;warmest&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;sst&#39;</span><span class="p">:</span> <span class="s1">&#39;warmest&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;lsat&#39;</span><span class="p">:</span> <span class="s1">&#39;warmest&#39;</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="n">variable</span> <span class="ow">in</span> <span class="n">lookup</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">lookup</span><span class="p">[</span><span class="n">variable</span><span class="p">]</span>
 
-    <span class="k">return</span> <span class="s1">&#39;highest&#39;</span></div>
+        <span class="k">return</span> <span class="s1">&#39;highest&#39;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">lookup</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;tas&#39;</span><span class="p">:</span> <span class="s1">&#39;coldest&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;sst&#39;</span><span class="p">:</span> <span class="s1">&#39;coldest&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;lsat&#39;</span><span class="p">:</span> <span class="s1">&#39;coldest&#39;</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="n">variable</span> <span class="ow">in</span> <span class="n">lookup</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">lookup</span><span class="p">[</span><span class="n">variable</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="s1">&#39;lowest&#39;</span></div>
 
 
 
 <div class="viewcode-block" id="basic_anomaly_and_rank">
 <a class="viewcode-back" href="../../../climind.stats.html#climind.stats.paragraphs.basic_anomaly_and_rank">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">basic_anomaly_and_rank</span><span class="p">(</span><span class="n">all_datasets</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">TimeSeriesAnnual</span><span class="p">],</span> <span class="n">year</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">basic_anomaly_and_rank</span><span class="p">(</span><span class="n">all_datasets</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">TimeSeriesAnnual</span><span class="p">],</span> <span class="n">year</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">output_list</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">all_datasets</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;No datasets provided&quot;</span><span class="p">)</span>
 
-    <span class="n">first_year</span><span class="p">,</span> <span class="n">last_year</span> <span class="o">=</span> <span class="n">get_start_and_end_year</span><span class="p">(</span><span class="n">all_datasets</span><span class="p">)</span>
+    <span class="n">selected_datasets</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">deselected_datasets</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">ds</span> <span class="ow">in</span> <span class="n">all_datasets</span><span class="p">:</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">last_year</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">get_first_and_last_year</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">last_year</span> <span class="o">&gt;=</span> <span class="n">year</span><span class="p">:</span>
+            <span class="n">selected_datasets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ds</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">deselected_datasets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ds</span><span class="p">)</span>
 
-    <span class="n">variable</span> <span class="o">=</span> <span class="n">all_datasets</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;variable&#39;</span><span class="p">]</span>
-    <span class="n">super_text</span> <span class="o">=</span> <span class="n">superlative</span><span class="p">(</span><span class="n">variable</span><span class="p">)</span>
+    <span class="n">first_year</span><span class="p">,</span> <span class="n">last_year</span> <span class="o">=</span> <span class="n">get_start_and_end_year</span><span class="p">(</span><span class="n">all_datasets</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">year</span> <span class="o">&gt;</span> <span class="n">last_year</span><span class="p">:</span>
         <span class="n">out_text</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;The most recent available year is </span><span class="si">{</span><span class="n">last_year</span><span class="si">}</span><span class="s1">. &#39;</span>
-        <span class="n">year</span> <span class="o">=</span> <span class="n">last_year</span>
+        <span class="k">if</span> <span class="n">output_list</span><span class="p">:</span>
+            <span class="n">key_figures</span><span class="p">,</span> <span class="n">out_text2</span> <span class="o">=</span> <span class="n">basic_anomaly_and_rank</span><span class="p">(</span><span class="n">all_datasets</span><span class="p">,</span> <span class="n">last_year</span><span class="p">,</span> <span class="n">output_list</span><span class="o">=</span><span class="n">output_list</span><span class="p">)</span>
+            <span class="n">out_text</span> <span class="o">+=</span> <span class="n">out_text2</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">key_figures</span><span class="p">,</span> <span class="n">out_text</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">out_text</span> <span class="o">+</span> <span class="n">basic_anomaly_and_rank</span><span class="p">(</span><span class="n">all_datasets</span><span class="p">,</span> <span class="n">last_year</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">out_text</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
 
+    <span class="n">variable</span> <span class="o">=</span> <span class="n">selected_datasets</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;variable&#39;</span><span class="p">]</span>
+    <span class="n">highest</span> <span class="o">=</span> <span class="kc">False</span>
+
     <span class="k">try</span><span class="p">:</span>
-        <span class="n">min_rank</span><span class="p">,</span> <span class="n">max_rank</span> <span class="o">=</span> <span class="n">pu</span><span class="o">.</span><span class="n">calculate_ranks</span><span class="p">(</span><span class="n">all_datasets</span><span class="p">,</span> <span class="n">year</span><span class="p">)</span>
+        <span class="n">hi_min_rank</span><span class="p">,</span> <span class="n">hi_max_rank</span> <span class="o">=</span> <span class="n">pu</span><span class="o">.</span><span class="n">calculate_ranks</span><span class="p">(</span><span class="n">selected_datasets</span><span class="p">,</span> <span class="n">year</span><span class="p">)</span>
+        <span class="n">lo_min_rank</span><span class="p">,</span> <span class="n">lo_max_rank</span> <span class="o">=</span> <span class="n">pu</span><span class="o">.</span><span class="n">calculate_ranks</span><span class="p">(</span><span class="n">selected_datasets</span><span class="p">,</span> <span class="n">year</span><span class="p">,</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">hi_min_rank</span> <span class="o">&lt;</span> <span class="n">lo_min_rank</span><span class="p">:</span>
+            <span class="n">highest</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">min_rank</span> <span class="o">=</span> <span class="n">hi_min_rank</span>
+            <span class="n">max_rank</span> <span class="o">=</span> <span class="n">hi_max_rank</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">min_rank</span> <span class="o">=</span> <span class="n">lo_min_rank</span>
+            <span class="n">max_rank</span> <span class="o">=</span> <span class="n">lo_max_rank</span>
     <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;No data for </span><span class="si">{</span><span class="n">year</span><span class="si">}</span><span class="s2">.&quot;</span>
 
-    <span class="n">mean_anomaly</span><span class="p">,</span> <span class="n">min_anomaly</span><span class="p">,</span> <span class="n">max_anomaly</span> <span class="o">=</span> <span class="n">pu</span><span class="o">.</span><span class="n">calculate_values</span><span class="p">(</span><span class="n">all_datasets</span><span class="p">,</span> <span class="n">year</span><span class="p">)</span>
+    <span class="n">super_text</span> <span class="o">=</span> <span class="n">superlative</span><span class="p">(</span><span class="n">variable</span><span class="p">,</span> <span class="n">highest</span><span class="o">=</span><span class="n">highest</span><span class="p">)</span>
 
-    <span class="n">units</span> <span class="o">=</span> <span class="n">fancy_html_units</span><span class="p">(</span><span class="n">all_datasets</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;units&#39;</span><span class="p">])</span>
+    <span class="n">mean_anomaly</span><span class="p">,</span> <span class="n">min_anomaly</span><span class="p">,</span> <span class="n">max_anomaly</span> <span class="o">=</span> <span class="n">pu</span><span class="o">.</span><span class="n">calculate_values</span><span class="p">(</span><span class="n">selected_datasets</span><span class="p">,</span> <span class="n">year</span><span class="p">)</span>
+
+    <span class="n">units</span> <span class="o">=</span> <span class="n">fancy_html_units</span><span class="p">(</span><span class="n">selected_datasets</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;units&#39;</span><span class="p">])</span>
 
     <span class="n">out_text</span> <span class="o">+=</span> <span class="sa">f</span><span class="s1">&#39;The year </span><span class="si">{</span><span class="n">year</span><span class="si">}</span><span class="s1"> was ranked </span><span class="si">{</span><span class="n">rank_ranges</span><span class="p">(</span><span class="n">min_rank</span><span class="p">,</span><span class="w"> </span><span class="n">max_rank</span><span class="p">)</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">super_text</span><span class="si">}</span><span class="s1"> &#39;</span> \
                 <span class="sa">f</span><span class="s1">&#39;on record. The mean value for </span><span class="si">{</span><span class="n">year</span><span class="si">}</span><span class="s1"> was &#39;</span> \
                 <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">mean_anomaly</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}{</span><span class="n">units</span><span class="si">}</span><span class="s1"> &#39;</span>
 
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">all_datasets</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;actual&#39;</span><span class="p">]:</span>
-        <span class="n">clim_start</span> <span class="o">=</span> <span class="n">all_datasets</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;climatology_start&#39;</span><span class="p">]</span>
-        <span class="n">clim_end</span> <span class="o">=</span> <span class="n">all_datasets</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;climatology_end&#39;</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">selected_datasets</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;actual&#39;</span><span class="p">]:</span>
+        <span class="n">clim_start</span> <span class="o">=</span> <span class="n">selected_datasets</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;climatology_start&#39;</span><span class="p">]</span>
+        <span class="n">clim_end</span> <span class="o">=</span> <span class="n">selected_datasets</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;climatology_end&#39;</span><span class="p">]</span>
         <span class="n">out_text</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;relative to the </span><span class="si">{</span><span class="n">clim_start</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">clim_end</span><span class="si">}</span><span class="s2"> average &quot;</span>
 
-    <span class="n">out_text</span> <span class="o">+=</span> <span class="sa">f</span><span class="s1">&#39;(</span><span class="si">{</span><span class="n">min_anomaly</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">max_anomaly</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}{</span><span class="n">units</span><span class="si">}</span><span class="s1"> depending on the data set used). &#39;</span> \
-                <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">all_datasets</span><span class="p">)</span><span class="si">}</span><span class="s1"> data sets were used in this assessment: </span><span class="si">{</span><span class="n">dataset_name_list</span><span class="p">(</span><span class="n">all_datasets</span><span class="p">,</span><span class="w"> </span><span class="n">year</span><span class="p">)</span><span class="si">}</span><span class="s1">.&#39;</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">selected_datasets</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">out_text</span> <span class="o">+=</span> <span class="sa">f</span><span class="s1">&#39;(</span><span class="si">{</span><span class="n">min_anomaly</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">max_anomaly</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}{</span><span class="n">units</span><span class="si">}</span><span class="s1"> depending on the data set used). &#39;</span> \
+                    <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">selected_datasets</span><span class="p">)</span><span class="si">}</span><span class="s1"> data sets were used in this assessment: </span><span class="si">{</span><span class="n">dataset_name_list</span><span class="p">(</span><span class="n">selected_datasets</span><span class="p">,</span><span class="w"> </span><span class="n">year</span><span class="p">)</span><span class="si">}</span><span class="s1">.&#39;</span>
 
-    <span class="k">return</span> <span class="n">out_text</span></div>
+        <span class="n">key_figure</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">mean_anomaly</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> [</span><span class="si">{</span><span class="n">min_anomaly</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&amp;mdash;</span><span class="si">{</span><span class="n">max_anomaly</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">] </span><span class="si">{</span><span class="n">units</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">key_figure</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">mean_anomaly</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}{</span><span class="n">units</span><span class="si">}</span><span class="s2">&quot;</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">deselected_datasets</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">out_text</span> <span class="o">+=</span> <span class="p">(</span><span class="sa">f</span><span class="s1">&#39; </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">deselected_datasets</span><span class="p">)</span><span class="si">}</span><span class="s1"> data set was not used in the assessment &#39;</span>
+                     <span class="sa">f</span><span class="s1">&#39;(</span><span class="si">{</span><span class="n">deselected_datasets</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;display_name&#39;</span><span class="p">]</span><span class="si">}</span><span class="s1">) because its last year &#39;</span>
+                     <span class="sa">f</span><span class="s1">&#39;is before </span><span class="si">{</span><span class="n">year</span><span class="si">}</span><span class="s1">. &#39;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">deselected_datasets</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">out_text</span> <span class="o">+=</span> <span class="p">(</span><span class="sa">f</span><span class="s1">&#39; </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">deselected_datasets</span><span class="p">)</span><span class="si">}</span><span class="s1"> data sets were not used in the assessment &#39;</span>
+                     <span class="sa">f</span><span class="s1">&#39;(</span><span class="si">{</span><span class="n">dataset_name_list</span><span class="p">(</span><span class="n">deselected_datasets</span><span class="p">,</span><span class="w"> </span><span class="n">year</span><span class="p">)</span><span class="si">}</span><span class="s1">) because their last years &#39;</span>
+                     <span class="sa">f</span><span class="s1">&#39;are before </span><span class="si">{</span><span class="n">year</span><span class="si">}</span><span class="s1">. &#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">output_list</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">key_figure</span><span class="p">,</span> <span class="n">out_text</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">out_text</span></div>
 
 
 
@@ -312,7 +370,7 @@
 
 <div class="viewcode-block" id="global_anomaly_and_rank">
 <a class="viewcode-back" href="../../../climind.stats.html#climind.stats.paragraphs.global_anomaly_and_rank">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">global_anomaly_and_rank</span><span class="p">(</span><span class="n">all_datasets</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">TimeSeriesAnnual</span><span class="p">],</span> <span class="n">year</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">global_anomaly_and_rank</span><span class="p">(</span><span class="n">all_datasets</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">TimeSeriesAnnual</span><span class="p">],</span> <span class="n">year</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">output_list</span><span class="p">:</span><span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 
 <span class="sd">    Parameters</span>
@@ -346,6 +404,8 @@
 
     <span class="n">units</span> <span class="o">=</span> <span class="n">fancy_html_units</span><span class="p">(</span><span class="n">all_datasets</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;units&#39;</span><span class="p">])</span>
 
+    <span class="n">key_figure</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">mean_anomaly</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1"> [</span><span class="si">{</span><span class="n">min_anomaly</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1"> to </span><span class="si">{</span><span class="n">max_anomaly</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1">]</span><span class="si">{</span><span class="n">units</span><span class="si">}</span><span class="s1">&#39;</span>
+
     <span class="n">out_text</span> <span class="o">+=</span> <span class="sa">f</span><span class="s1">&#39;The year </span><span class="si">{</span><span class="n">year</span><span class="si">}</span><span class="s1"> was ranked </span><span class="si">{</span><span class="n">rank_ranges</span><span class="p">(</span><span class="n">min_rank</span><span class="p">,</span><span class="w"> </span><span class="n">max_rank</span><span class="p">)</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">super_text</span><span class="si">}</span><span class="s1"> &#39;</span> \
                 <span class="sa">f</span><span class="s1">&#39;on record. The anomaly for </span><span class="si">{</span><span class="n">year</span><span class="si">}</span><span class="s1"> was &#39;</span> \
                 <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">mean_anomaly</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1"> [</span><span class="si">{</span><span class="n">min_anomaly</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1"> to </span><span class="si">{</span><span class="n">max_anomaly</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1">]</span><span class="si">{</span><span class="n">units</span><span class="si">}</span><span class="s1"> &#39;</span>
@@ -357,13 +417,16 @@
 
     <span class="n">out_text</span> <span class="o">+=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">all_datasets</span><span class="p">)</span><span class="si">}</span><span class="s1"> data sets were used in this assessment: </span><span class="si">{</span><span class="n">dataset_name_list</span><span class="p">(</span><span class="n">all_datasets</span><span class="p">,</span><span class="w"> </span><span class="n">year</span><span class="p">)</span><span class="si">}</span><span class="s1">.&#39;</span>
 
-    <span class="k">return</span> <span class="n">out_text</span></div>
+    <span class="k">if</span> <span class="n">output_list</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">key_figure</span><span class="p">,</span> <span class="n">out_text</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">out_text</span></div>
 
 
 
 <div class="viewcode-block" id="anomaly_and_rank">
 <a class="viewcode-back" href="../../../climind.stats.html#climind.stats.paragraphs.anomaly_and_rank">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">anomaly_and_rank</span><span class="p">(</span><span class="n">all_datasets</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">TimeSeriesAnnual</span><span class="p">],</span> <span class="n">year</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">anomaly_and_rank</span><span class="p">(</span><span class="n">all_datasets</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">TimeSeriesAnnual</span><span class="p">],</span> <span class="n">year</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">output_list</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Write a short paragraph, returned as a string, which gives the rank range and data value for the chosen year,</span>
 <span class="sd">    as well as saying how many data sets and which datasets were used.</span>
@@ -379,12 +442,15 @@
 <span class="sd">    str</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">out_text</span> <span class="o">=</span> <span class="n">basic_anomaly_and_rank</span><span class="p">(</span><span class="n">all_datasets</span><span class="p">,</span> <span class="n">year</span><span class="p">)</span>
+    <span class="n">key_message</span><span class="p">,</span> <span class="n">out_text</span> <span class="o">=</span> <span class="n">basic_anomaly_and_rank</span><span class="p">(</span><span class="n">all_datasets</span><span class="p">,</span> <span class="n">year</span><span class="p">,</span> <span class="n">output_list</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">out_text</span> <span class="o">+=</span> <span class="n">compare_to_highest_anomaly_and_rank</span><span class="p">(</span><span class="n">all_datasets</span><span class="p">,</span> <span class="n">year</span><span class="p">)</span>
     <span class="n">out_text</span> <span class="o">+=</span> <span class="s2">&quot;&lt;/p&gt;&lt;p&gt;&quot;</span>
     <span class="n">out_text</span> <span class="o">+=</span> <span class="n">basic_anomaly_and_rank</span><span class="p">(</span><span class="n">all_datasets</span><span class="p">,</span> <span class="n">year</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
 
-    <span class="k">return</span> <span class="n">out_text</span></div>
+    <span class="k">if</span> <span class="n">output_list</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">key_message</span><span class="p">,</span> <span class="n">out_text</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">out_text</span></div>
 
 
 
@@ -524,7 +590,7 @@
 
 <div class="viewcode-block" id="arctic_ice_paragraph">
 <a class="viewcode-back" href="../../../climind.stats.html#climind.stats.paragraphs.arctic_ice_paragraph">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">arctic_ice_paragraph</span><span class="p">(</span><span class="n">all_datasets</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">TimeSeriesMonthly</span><span class="p">],</span> <span class="n">year</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">arctic_ice_paragraph</span><span class="p">(</span><span class="n">all_datasets</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">TimeSeriesMonthly</span><span class="p">],</span> <span class="n">year</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">output_list</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Generate a paragraph of some standard stats for the Arctic sea ice: rank and value for max and min extents in the</span>
 <span class="sd">    year (March and September).</span>
@@ -570,10 +636,15 @@
                     <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">max_september_value</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}{</span><span class="n">units</span><span class="si">}</span><span class="s1">. &#39;</span> \
                     <span class="sa">f</span><span class="s1">&#39;This was </span><span class="si">{</span><span class="n">rank_ranges</span><span class="p">(</span><span class="n">min_september_rank</span><span class="p">,</span><span class="w"> </span><span class="n">max_september_rank</span><span class="p">)</span><span class="si">}</span><span class="s1"> lowest extent on record. &#39;</span> \
                     <span class="sa">f</span><span class="s1">&#39;Data sets used were: </span><span class="si">{</span><span class="n">dataset_name_list</span><span class="p">(</span><span class="n">all_datasets</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="n">key_figure</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">min_september_value</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> - </span><span class="si">{</span><span class="n">max_september_value</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}{</span><span class="n">units</span><span class="si">}</span><span class="s2">&quot;</span>
     <span class="k">except</span><span class="p">:</span>
         <span class="n">out_text</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;September data are not yet available for </span><span class="si">{</span><span class="n">year</span><span class="si">}</span><span class="s2">.&quot;</span>
+        <span class="n">key_figure</span> <span class="o">=</span> <span class="s2">&quot;-&quot;</span>
 
-    <span class="k">return</span> <span class="n">out_text</span></div>
+    <span class="k">if</span> <span class="n">output_list</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">key_figure</span><span class="p">,</span> <span class="n">out_text</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">out_text</span></div>
 
 
 
@@ -636,7 +707,7 @@
 
 <div class="viewcode-block" id="glacier_paragraph">
 <a class="viewcode-back" href="../../../climind.stats.html#climind.stats.paragraphs.glacier_paragraph">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">glacier_paragraph</span><span class="p">(</span><span class="n">all_datasets</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">TimeSeriesMonthly</span><span class="p">,</span> <span class="n">TimeSeriesAnnual</span><span class="p">]],</span> <span class="n">year</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">glacier_paragraph</span><span class="p">(</span><span class="n">all_datasets</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">TimeSeriesMonthly</span><span class="p">,</span> <span class="n">TimeSeriesAnnual</span><span class="p">]],</span> <span class="n">year</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">output_list</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Write the glacier paragraph</span>
 <span class="sd">    Parameters</span>
@@ -681,7 +752,12 @@
                 <span class="sa">f</span><span class="s1">&#39;since </span><span class="si">{</span><span class="n">last_positive</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s1">. &#39;</span> \
                 <span class="sa">f</span><span class="s1">&#39;Cumulative glacier loss since 1970 is </span><span class="si">{</span><span class="n">all_datasets</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">get_value_from_year</span><span class="p">(</span><span class="n">year</span><span class="p">)</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}{</span><span class="n">units</span><span class="si">}</span><span class="s1">.&#39;</span>
 
-    <span class="k">return</span> <span class="n">out_text</span></div>
+    <span class="n">key_figure</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">all_datasets</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">get_value_from_year</span><span class="p">(</span><span class="n">year</span><span class="p">)</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}{</span><span class="n">units</span><span class="si">}</span><span class="s2">&quot;</span>
+
+    <span class="k">if</span> <span class="n">output_list</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">key_figure</span><span class="p">,</span> <span class="n">out_text</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">out_text</span></div>
 
 
 
@@ -694,7 +770,7 @@
 
 <div class="viewcode-block" id="co2_paragraph">
 <a class="viewcode-back" href="../../../climind.stats.html#climind.stats.paragraphs.co2_paragraph">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">co2_paragraph</span><span class="p">(</span><span class="n">all_datasets</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">TimeSeriesAnnual</span><span class="p">],</span> <span class="n">year</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">update</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">co2_paragraph</span><span class="p">(</span><span class="n">all_datasets</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">TimeSeriesAnnual</span><span class="p">],</span> <span class="n">year</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">update</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">output_list</span><span class="p">:</span><span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">list</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Generate a paragraph of some standard stats for greenhouse gases</span>
 
@@ -735,6 +811,8 @@
 
     <span class="k">if</span> <span class="n">last_year</span> <span class="o">==</span> <span class="o">-</span><span class="mi">9999</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;No greenhouse gas data sets found&quot;</span><span class="p">)</span>
+
+    <span class="n">key_number</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">tb</span><span class="p">[</span><span class="s1">&#39;co2&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> &amp;plusmn; </span><span class="si">{</span><span class="n">tb</span><span class="p">[</span><span class="s1">&#39;co2&#39;</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> parts per million (ppm)&quot;</span>
 
     <span class="k">if</span> <span class="n">tb</span><span class="p">[</span><span class="s1">&#39;co2&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">tb</span><span class="p">[</span><span class="s1">&#39;ch4&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">tb</span><span class="p">[</span><span class="s1">&#39;n2o&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
         <span class="n">out_text</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;In </span><span class="si">{</span><span class="n">last_year</span><span class="si">}</span><span class="s2">, greenhouse gas mole fractions reached new highs, &quot;</span> \
@@ -786,7 +864,10 @@
                                   <span class="sa">f</span><span class="s1">&#39;CO&lt;sub&gt;2&lt;/sub&gt;, CH&lt;sub&gt;4&lt;/sub&gt; and N&lt;sub&gt;2&lt;/sub&gt;O continued to &#39;</span> \
                                   <span class="sa">f</span><span class="s1">&#39;increase in </span><span class="si">{</span><span class="n">year</span><span class="si">}</span><span class="s1">.&#39;</span>
 
-    <span class="k">return</span> <span class="n">out_text</span></div>
+    <span class="k">if</span> <span class="n">output_list</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">key_number</span><span class="p">,</span> <span class="n">out_text</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">out_text</span></div>
 
 
 
@@ -903,9 +984,22 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">summary</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">ds</span> <span class="ow">in</span> <span class="n">all_datasets</span><span class="p">:</span>
-        <span class="n">this_year</span> <span class="o">=</span> <span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">get_value</span><span class="p">(</span><span class="n">year</span><span class="p">,</span> <span class="mi">8</span><span class="p">)</span> <span class="o">+</span> <span class="n">ds</span><span class="o">.</span><span class="n">get_value</span><span class="p">(</span><span class="n">year</span><span class="p">,</span> <span class="mi">9</span><span class="p">))</span> <span class="o">/</span> <span class="mi">2</span>
-        <span class="n">last_year</span> <span class="o">=</span> <span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">get_value</span><span class="p">(</span><span class="n">year</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">8</span><span class="p">)</span> <span class="o">+</span> <span class="n">ds</span><span class="o">.</span><span class="n">get_value</span><span class="p">(</span><span class="n">year</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">9</span><span class="p">))</span> <span class="o">/</span> <span class="mi">2</span>
-        <span class="k">if</span> <span class="n">this_year</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">last_year</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+
+        <span class="n">this_year_1</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">get_value</span><span class="p">(</span><span class="n">year</span><span class="p">,</span> <span class="mi">8</span><span class="p">)</span>
+        <span class="n">this_year_2</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">get_value</span><span class="p">(</span><span class="n">year</span><span class="p">,</span> <span class="mi">9</span><span class="p">)</span>
+        <span class="n">last_year_1</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">get_value</span><span class="p">(</span><span class="n">year</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">8</span><span class="p">)</span>
+        <span class="n">last_year_2</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">get_value</span><span class="p">(</span><span class="n">year</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">9</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="p">(</span>
+                <span class="n">this_year_1</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span>
+                <span class="n">last_year_1</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span>
+                <span class="n">this_year_2</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span>
+                <span class="n">last_year_2</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="p">):</span>
+
+            <span class="n">this_year</span> <span class="o">=</span> <span class="p">(</span><span class="n">this_year_1</span> <span class="o">+</span> <span class="n">this_year_2</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+            <span class="n">last_year</span> <span class="o">=</span> <span class="p">(</span><span class="n">last_year_1</span> <span class="o">+</span> <span class="n">last_year_2</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+
             <span class="n">this_difference</span> <span class="o">=</span> <span class="n">this_year</span> <span class="o">-</span> <span class="n">last_year</span>
             <span class="n">ds_copy</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">ds</span><span class="p">)</span>
             <span class="n">subset</span> <span class="o">=</span> <span class="n">ds_copy</span><span class="o">.</span><span class="n">select_year_range</span><span class="p">(</span><span class="mi">2005</span><span class="p">,</span> <span class="n">year</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
@@ -971,7 +1065,7 @@
 
 <div class="viewcode-block" id="long_term_trend_paragraph">
 <a class="viewcode-back" href="../../../climind.stats.html#climind.stats.paragraphs.long_term_trend_paragraph">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">long_term_trend_paragraph</span><span class="p">(</span><span class="n">all_datasets</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">TimeSeriesMonthly</span><span class="p">],</span> <span class="n">year</span><span class="p">:</span><span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">long_term_trend_paragraph</span><span class="p">(</span><span class="n">all_datasets</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">TimeSeriesMonthly</span><span class="p">],</span> <span class="n">year</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">output_list</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
     <span class="n">all_trends</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">all_initial_trends</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">all_recent_trends</span> <span class="o">=</span> <span class="p">[]</span>
@@ -988,7 +1082,7 @@
 
         <span class="n">selection</span> <span class="o">=</span> <span class="n">times</span> <span class="o">&lt;</span> <span class="mi">2003</span>
         <span class="n">result</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">polyfit</span><span class="p">(</span><span class="n">times</span><span class="p">[</span><span class="n">selection</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="n">selection</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span>
-        <span class="n">trend2</span><span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">trend2</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="n">all_initial_trends</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">trend2</span><span class="p">)</span>
 
         <span class="n">selection</span> <span class="o">=</span> <span class="n">times</span> <span class="o">&gt;=</span> <span class="p">(</span><span class="n">year</span> <span class="o">-</span> <span class="mi">9</span><span class="p">)</span>
@@ -996,7 +1090,7 @@
         <span class="n">trend3</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="n">all_recent_trends</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">trend3</span><span class="p">)</span>
 
-        <span class="n">selection</span> <span class="o">=</span> <span class="p">(</span><span class="n">times</span> <span class="o">&gt;=</span> <span class="mi">2015</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">times</span> <span class="o">&lt;</span> <span class="mi">2025</span><span class="p">)</span>
+        <span class="n">selection</span> <span class="o">=</span> <span class="p">(</span><span class="n">times</span> <span class="o">&gt;=</span> <span class="mi">2015</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">times</span> <span class="o">&lt;</span> <span class="n">year</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">result</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">polyfit</span><span class="p">(</span><span class="n">times</span><span class="p">[</span><span class="n">selection</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="n">selection</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span>
         <span class="n">trend4</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="n">all_semi_recent_trends</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">trend4</span><span class="p">)</span>
@@ -1005,12 +1099,17 @@
 
         <span class="n">units</span> <span class="o">=</span> <span class="n">fancy_html_units</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;units&#39;</span><span class="p">])</span>
         <span class="n">out_text</span> <span class="o">+=</span> <span class="p">(</span><span class="sa">f</span><span class="s2">&quot;The rate of change in the </span><span class="si">{</span><span class="n">ds</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;display_name&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> data set is </span><span class="si">{</span><span class="n">trend1</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">units</span><span class="si">}</span><span class="s2">/yr &quot;</span>
-                     <span class="sa">f</span><span class="s2">&quot;between </span><span class="si">{</span><span class="n">first_year</span><span class="si">}</span><span class="s2"> and </span><span class="si">{</span><span class="n">last_year</span><span class="si">}</span><span class="s2">. The rate of change in the past decade </span><span class="si">{</span><span class="n">year</span><span class="o">-</span><span class="mi">9</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">year</span><span class="si">}</span><span class="s2"> is &quot;</span>
+                     <span class="sa">f</span><span class="s2">&quot;between </span><span class="si">{</span><span class="n">first_year</span><span class="si">}</span><span class="s2"> and </span><span class="si">{</span><span class="n">last_year</span><span class="si">}</span><span class="s2">. The rate of change in the past decade </span><span class="si">{</span><span class="n">year</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">9</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">year</span><span class="si">}</span><span class="s2"> is &quot;</span>
                      <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">trend3</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">units</span><span class="si">}</span><span class="s2">/yr which is higher than the trend for the first decade of the satellite &quot;</span>
-                     <span class="sa">f</span><span class="s2">&quot;record 1993-2002 which was </span><span class="si">{</span><span class="n">trend2</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">units</span><span class="si">}</span><span class="s2">/yr. The trend for 2015-2014 was </span><span class="si">{</span><span class="n">trend4</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> &quot;</span>
-                     <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">units</span><span class="si">}</span><span class="s2">/yr.</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+                     <span class="sa">f</span><span class="s2">&quot;record 1993-2002 which was </span><span class="si">{</span><span class="n">trend2</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">units</span><span class="si">}</span><span class="s2">/yr. The trend for 2015-</span><span class="si">{</span><span class="n">year</span><span class="si">}</span><span class="s2"> was </span><span class="si">{</span><span class="n">trend4</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> &quot;</span>
+                     <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">units</span><span class="si">}</span><span class="s2">/yr.&quot;</span><span class="p">)</span>
 
-    <span class="k">return</span> <span class="n">out_text</span></div>
+        <span class="n">key_figures</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">trend1</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">units</span><span class="si">}</span><span class="s2">/yr&quot;</span>
+
+    <span class="k">if</span> <span class="n">output_list</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">key_figures</span><span class="p">,</span> <span class="n">out_text</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">out_text</span></div>
 
 
 
@@ -1072,7 +1171,8 @@
 <a class="viewcode-back" href="../../../climind.stats.html#climind.stats.paragraphs.svg_background">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">svg_background</span><span class="p">(</span><span class="n">all_datasets</span><span class="p">,</span> <span class="n">year</span><span class="p">):</span>
     <span class="n">out_text</span> <span class="o">=</span> <span class="s1">&#39;&lt;svg xmlns=&quot;http://www.w3.org/2000/svg&quot; viewBox=&quot;0 0 100 100&quot; preserveAspectRatio=&quot;none&quot; style=&quot;background-color:var(--dashblue);&quot;&gt;&#39;</span>
-    <span class="n">out_text</span> <span class="o">+=</span> <span class="s1">&#39;&lt;polygon points=&quot;&#39;</span><span class="o">+</span><span class="n">convert_to_percentages</span><span class="p">(</span><span class="n">all_datasets</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">+</span><span class="s1">&#39;&quot;  style=&quot;fill:var(--dashorange);stroke:var(--dashwhite);stroke-width:0&quot; /&gt;&#39;</span>
+    <span class="n">out_text</span> <span class="o">+=</span> <span class="s1">&#39;&lt;polygon points=&quot;&#39;</span> <span class="o">+</span> <span class="n">convert_to_percentages</span><span class="p">(</span>
+        <span class="n">all_datasets</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">+</span> <span class="s1">&#39;&quot;  style=&quot;fill:var(--dashorange);stroke:var(--dashwhite);stroke-width:0&quot; /&gt;&#39;</span>
     <span class="n">out_text</span> <span class="o">+=</span> <span class="s1">&#39;&lt;/svg&gt;&#39;</span>
     <span class="k">return</span> <span class="n">out_text</span></div>
 

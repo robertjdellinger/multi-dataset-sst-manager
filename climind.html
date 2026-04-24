@@ -6,16 +6,16 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>climind package &mdash; Climind 1.3 documentation</title>
+  <title>climind package &mdash; Climind 1.4 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=c55cb9cb"></script>
-      <script src="_static/doctools.js?v=9bcbadda"></script>
-      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/documentation_options.js?v=0ed52906"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" /> 
@@ -240,15 +240,18 @@
 <li class="toctree-l4"><a class="reference internal" href="climind.data_types.html#climind.data_types.timeseries.TimeSeriesIrregular.get_start_and_end_dates"><code class="docutils literal notranslate"><span class="pre">TimeSeriesIrregular.get_start_and_end_dates()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="climind.data_types.html#climind.data_types.timeseries.TimeSeriesIrregular.get_string_date_range"><code class="docutils literal notranslate"><span class="pre">TimeSeriesIrregular.get_string_date_range()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="climind.data_types.html#climind.data_types.timeseries.TimeSeriesIrregular.get_year_axis"><code class="docutils literal notranslate"><span class="pre">TimeSeriesIrregular.get_year_axis()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="climind.data_types.html#climind.data_types.timeseries.TimeSeriesIrregular.lowess"><code class="docutils literal notranslate"><span class="pre">TimeSeriesIrregular.lowess()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="climind.data_types.html#climind.data_types.timeseries.TimeSeriesIrregular.make_monthly"><code class="docutils literal notranslate"><span class="pre">TimeSeriesIrregular.make_monthly()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="climind.data_types.html#climind.data_types.timeseries.TimeSeriesIrregular.rebaseline"><code class="docutils literal notranslate"><span class="pre">TimeSeriesIrregular.rebaseline()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="climind.data_types.html#climind.data_types.timeseries.TimeSeriesIrregular.write_csv"><code class="docutils literal notranslate"><span class="pre">TimeSeriesIrregular.write_csv()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="climind.data_types.html#climind.data_types.timeseries.TimeSeriesIrregular.zero_on_year"><code class="docutils literal notranslate"><span class="pre">TimeSeriesIrregular.zero_on_year()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="climind.data_types.html#climind.data_types.timeseries.TimeSeriesMonthly"><code class="docutils literal notranslate"><span class="pre">TimeSeriesMonthly</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="climind.data_types.html#climind.data_types.timeseries.TimeSeriesMonthly.df"><code class="docutils literal notranslate"><span class="pre">TimeSeriesMonthly.df</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="climind.data_types.html#climind.data_types.timeseries.TimeSeriesMonthly.metadata"><code class="docutils literal notranslate"><span class="pre">TimeSeriesMonthly.metadata</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="climind.data_types.html#climind.data_types.timeseries.TimeSeriesMonthly.calculate_climatology"><code class="docutils literal notranslate"><span class="pre">TimeSeriesMonthly.calculate_climatology()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="climind.data_types.html#climind.data_types.timeseries.TimeSeriesMonthly.change_end_month"><code class="docutils literal notranslate"><span class="pre">TimeSeriesMonthly.change_end_month()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="climind.data_types.html#climind.data_types.timeseries.TimeSeriesMonthly.generate_dates"><code class="docutils literal notranslate"><span class="pre">TimeSeriesMonthly.generate_dates()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="climind.data_types.html#climind.data_types.timeseries.TimeSeriesMonthly.get_rank_from_year_and_month"><code class="docutils literal notranslate"><span class="pre">TimeSeriesMonthly.get_rank_from_year_and_month()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="climind.data_types.html#climind.data_types.timeseries.TimeSeriesMonthly.get_start_and_end_dates"><code class="docutils literal notranslate"><span class="pre">TimeSeriesMonthly.get_start_and_end_dates()</span></code></a></li>
@@ -403,6 +406,8 @@
 <li class="toctree-l3"><a class="reference internal" href="climind.plotters.html#climind.plotters.plot_types.decade_plot"><code class="docutils literal notranslate"><span class="pre">decade_plot()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="climind.plotters.html#climind.plotters.plot_types.equivalence"><code class="docutils literal notranslate"><span class="pre">equivalence()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="climind.plotters.html#climind.plotters.plot_types.get_levels_and_palette"><code class="docutils literal notranslate"><span class="pre">get_levels_and_palette()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="climind.plotters.html#climind.plotters.plot_types.interactive_widget"><code class="docutils literal notranslate"><span class="pre">interactive_widget()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="climind.plotters.html#climind.plotters.plot_types.interactive_widget_uncertainty"><code class="docutils literal notranslate"><span class="pre">interactive_widget_uncertainty()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="climind.plotters.html#climind.plotters.plot_types.marine_heatwave_plot"><code class="docutils literal notranslate"><span class="pre">marine_heatwave_plot()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="climind.plotters.html#climind.plotters.plot_types.monthly_plot"><code class="docutils literal notranslate"><span class="pre">monthly_plot()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="climind.plotters.html#climind.plotters.plot_types.neat_plot"><code class="docutils literal notranslate"><span class="pre">neat_plot()</span></code></a></li>
@@ -463,6 +468,7 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="climind.readers.html#module-climind.readers.reader_aviso_ftp">climind.readers.reader_aviso_ftp module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="climind.readers.html#climind.readers.reader_aviso_ftp.read_annual_ts"><code class="docutils literal notranslate"><span class="pre">read_annual_ts()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="climind.readers.html#climind.readers.reader_aviso_ftp.read_monthly_ts"><code class="docutils literal notranslate"><span class="pre">read_monthly_ts()</span></code></a></li>
 </ul>
 </li>
@@ -599,6 +605,7 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="climind.readers.html#module-climind.readers.reader_era5">climind.readers.reader_era5 module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="climind.readers.html#climind.readers.reader_era5.back_search"><code class="docutils literal notranslate"><span class="pre">back_search()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="climind.readers.html#climind.readers.reader_era5.find_latest"><code class="docutils literal notranslate"><span class="pre">find_latest()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="climind.readers.html#climind.readers.reader_era5.get_latest_filename_and_url"><code class="docutils literal notranslate"><span class="pre">get_latest_filename_and_url()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="climind.readers.html#climind.readers.reader_era5.read_annual_ts"><code class="docutils literal notranslate"><span class="pre">read_annual_ts()</span></code></a></li>
@@ -631,6 +638,7 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="climind.readers.html#module-climind.readers.reader_gcos_temp">climind.readers.reader_gcos_temp module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="climind.readers.html#climind.readers.reader_gcos_temp.read_annual_ts"><code class="docutils literal notranslate"><span class="pre">read_annual_ts()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="climind.readers.html#climind.readers.reader_gcos_temp.read_annual_ts_2024"><code class="docutils literal notranslate"><span class="pre">read_annual_ts_2024()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="climind.readers.html#climind.readers.reader_gcos_temp.read_ts"><code class="docutils literal notranslate"><span class="pre">read_ts()</span></code></a></li>
 </ul>
 </li>
@@ -756,6 +764,7 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="climind.readers.html#module-climind.readers.reader_kennaook">climind.readers.reader_kennaook module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="climind.readers.html#climind.readers.reader_kennaook.read_annual_ts"><code class="docutils literal notranslate"><span class="pre">read_annual_ts()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="climind.readers.html#climind.readers.reader_kennaook.read_monthly_ts"><code class="docutils literal notranslate"><span class="pre">read_monthly_ts()</span></code></a></li>
 </ul>
 </li>
@@ -790,6 +799,7 @@
 <li class="toctree-l2"><a class="reference internal" href="climind.readers.html#module-climind.readers.reader_nasa_sealevel">climind.readers.reader_nasa_sealevel module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="climind.readers.html#climind.readers.reader_nasa_sealevel.convert_partial_year"><code class="docutils literal notranslate"><span class="pre">convert_partial_year()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="climind.readers.html#climind.readers.reader_nasa_sealevel.read_monthly_ts"><code class="docutils literal notranslate"><span class="pre">read_monthly_ts()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="climind.readers.html#climind.readers.reader_nasa_sealevel.read_new_monthly_ts"><code class="docutils literal notranslate"><span class="pre">read_new_monthly_ts()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="climind.readers.html#module-climind.readers.reader_noaa_index">climind.readers.reader_noaa_index module</a><ul>
