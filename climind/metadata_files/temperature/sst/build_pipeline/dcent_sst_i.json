@@ -1,0 +1,65 @@
+{
+  "name": "DCENT-SST-I",
+  "display_name": "DCENT-I",
+  "version": "1.0",
+  "variable": "sst",
+  "units": "degC",
+  "citation": [
+    "Chan, D., Gebbie, G., Huybers, P., and Kent, E. C. (2024). A Dynamically Consistent ENsemble of Temperature at the Earth Surface since 1850 from the DCENT dataset. Scientific Data, 11, 953. https://doi.org/10.1038/s41597-024-03742-x.",
+    "Chan, D., Chan, S. C., Siddons, J. T., Cable, A., Cornes, R. C., Kent, E. C., Gebbie, G., and Huybers, P. (2026). DCENT-I: A Globally Infilled Extension of the Dynamically Consistent ENsemble of Temperature Dataset. Geoscience Data Journal. https://doi.org/10.1002/gdj3.70054."
+  ],
+  "citation_url": [
+    "https://doi.org/10.1038/s41597-024-03742-x",
+    "https://doi.org/10.1002/gdj3.70054"
+  ],
+  "data_citation": [
+    "Chan, Duo; Chan, Steven; Siddons, Joseph; Cable, Archie; Cornes, Richard; Kent, Elizabeth; Gebbie, Geoffrey; Huybers, Peter, 2025, \"DCENT-I: A Globally Infilled Extension of the Dynamically Consistent ENsemble of Temperature Dataset\", Harvard Dataverse, V1. https://doi.org/10.7910/DVN/ZY0WM8.",
+    "DCENT-I machine-readable Dataverse metadata: https://dataverse.harvard.edu/api/datasets/export?exporter=dataverse_json&persistentId=doi%3A10.7910/DVN/ZY0WM8.",
+    "DCENT-I project page: https://dcent-i.github.io/."
+  ],
+  "acknowledgement": "DCENT-I data were obtained from the DCENT-I project and Harvard Dataverse. Record the exact access date, source service, source file, and whether the file was obtained from Dataverse, CEDA, Google Cloud, or the project-provided ocean summary file.",
+  "colour": "darkorange",
+  "zpos": 97,
+  "origin": "obs",
+  "notes": "The formatted DCENT-I output uses the annual ocean surface temperature statistics file so the reported uncertainty column remains traceable. The monthly file is retained in metadata for monthly-to-annual processing support when a monthly uncertainty workflow is verified.",
+  "datasets": [
+    {
+      "url": [
+        "https://www.dropbox.com/scl/fi/aum9bnz22o69ysoovqwy5/DCENT_DCENT_I_OST_monthly_statistics.txt?rlkey=tzqz53wmkr1np2uh6pfrr88re&st=hf0r0r1y&dl=1"
+      ],
+      "filename": [
+        "monthly/DCENT_DCENT_I_OST_monthly_statistics.txt"
+      ],
+      "type": "timeseries",
+      "long_name": "Global ocean surface temperature anomaly",
+      "time_resolution": "monthly",
+      "space_resolution": 999,
+      "climatology_start": 1991,
+      "climatology_end": 2020,
+      "actual": false,
+      "derived": false,
+      "history": [],
+      "reader": "reader_dcenti",
+      "fetcher": "fetcher_standard_url_with_rename"
+    },
+    {
+      "url": [
+        "https://www.dropbox.com/scl/fi/nxhtud84wxvvkfgrelwsq/DCENT_DCENT_I_OST_annual_statistics.txt?rlkey=w0q6eot2hjfcbfc84hda8nvw4&st=jdqccqw3&dl=1"
+      ],
+      "filename": [
+        "annual_statistics/DCENT_DCENT_I_OST_annual_statistics_embargo.txt"
+      ],
+      "type": "timeseries",
+      "long_name": "Global ocean surface temperature anomaly",
+      "time_resolution": "annual",
+      "space_resolution": 999,
+      "climatology_start": 1991,
+      "climatology_end": 2020,
+      "actual": false,
+      "derived": false,
+      "history": [],
+      "reader": "reader_dcenti",
+      "fetcher": "fetcher_standard_url_with_rename"
+    }
+  ]
+}

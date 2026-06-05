@@ -1,0 +1,63 @@
+{
+  "name": "ERSST-v6",
+  "display_name": "ERSST v6",
+  "version": "6.0.0",
+  "variable": "sst",
+  "units": "degC",
+  "citation": [
+    "Huang, B., Yin, X., Boyer, T., Liu, C., Menne, M., Rao, Y. D., Smith, T., Vose, R., and Zhang, H.-M. (2025). Extended Reconstructed Sea Surface Temperature Version 6 (ERSSTv6): Part I. An Artificial Neural Network Approach. Journal of Climate, 38, 1105-1121. https://doi.org/10.1175/JCLI-D-23-0707.1.",
+    "Huang, B., Yin, X., Boyer, T., Liu, C., Menne, M., Rao, Y. D., Smith, T., Vose, R., and Zhang, H.-M. (2025). Extended Reconstructed Sea Surface Temperature Version 6 (ERSSTv6): Part II. Upgrades on Quality Control and Large-scale Filter. Journal of Climate, 38, 1123-1136. https://doi.org/10.1175/JCLI-D-24-0185.1."
+  ],
+  "citation_url": [
+    "https://doi.org/10.1175/JCLI-D-23-0707.1",
+    "https://doi.org/10.1175/JCLI-D-24-0185.1"
+  ],
+  "data_citation": [
+    "Huang, B., Yin, X., Menne, M. J., Vose, R. S., and Zhang, H.-M. (2024). NOAA Global Surface Temperature Dataset (NOAAGlobalTemp), Version 6.0 [indicate ocean subset used]. NOAA National Centers for Environmental Information. https://doi.org/10.25921/rzxg-p717."
+  ],
+  "acknowledgement": "NOAA ERSST v6 ocean time series data were obtained from NOAA National Centers for Environmental Information through the NOAA Global Surface Temperature Dataset, Version 6.0. Record the exact access date, version, source URLs, and filenames used during processing.",
+  "colour": "firebrick",
+  "zpos": 98,
+  "origin": "obs",
+  "notes": "The monthly NOAA GlobalTemp ocean time series is annualized with arithmetic means for the required formatted SST output. The annual time series is retained as a source diagnostic.",
+  "datasets": [
+    {
+      "url": [
+        "https://www.ncei.noaa.gov/data/noaa-global-surface-temperature/v6/access/timeseries/aravg.mon.ocean.90S.90N.v6.0.0.[0-9]*.asc"
+      ],
+      "filename": [
+        "aravg.mon.ocean.90S.90N.v6.0.0.[0-9]*.asc"
+      ],
+      "type": "timeseries",
+      "long_name": "Global ocean sea-surface temperature anomaly",
+      "time_resolution": "monthly",
+      "space_resolution": 999,
+      "climatology_start": 1991,
+      "climatology_end": 2020,
+      "actual": false,
+      "derived": false,
+      "history": [],
+      "reader": "reader_noaaglobaltemp",
+      "fetcher": "fetcher_noaaglobaltemp"
+    },
+    {
+      "url": [
+        "https://www.ncei.noaa.gov/data/noaa-global-surface-temperature/v6/access/timeseries/aravg.ann.ocean.90S.90N.v6.0.0.[0-9]*.asc"
+      ],
+      "filename": [
+        "aravg.ann.ocean.90S.90N.v6.0.0.[0-9]*.asc"
+      ],
+      "type": "timeseries",
+      "long_name": "Global ocean sea-surface temperature anomaly",
+      "time_resolution": "annual",
+      "space_resolution": 999,
+      "climatology_start": 1991,
+      "climatology_end": 2020,
+      "actual": false,
+      "derived": false,
+      "history": [],
+      "reader": "reader_noaaglobaltemp",
+      "fetcher": "fetcher_noaaglobaltemp"
+    }
+  ]
+}

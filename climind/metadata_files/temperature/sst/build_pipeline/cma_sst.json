@@ -1,0 +1,46 @@
+{
+  "name": "CMA-SST",
+  "display_name": "CMA-SST",
+  "version": "current",
+  "variable": "sst",
+  "units": "degC",
+  "citation": [
+    "Chen, L., Cao, L., Zhou, Z., Zhang, D., and Liao, J. (2021). A new globally reconstructed sea surface temperature analysis dataset since 1900. Journal of Meteorological Research, 35, 911-925. https://doi.org/10.1007/s13351-021-1098-7.",
+    "Chen, L., Xu, W., Zhou, Z. et al. A new global land-ocean merged surface temperature dataset since the 1850s: the CMA-GMST dataset. Climate Dynamics, 63, 187 (2025). https://doi.org/10.1007/s00382-025-07614-x."
+  ],
+  "citation_url": [
+    "https://doi.org/10.1007/s13351-021-1098-7",
+    "https://doi.org/10.1007/s00382-025-07614-x"
+  ],
+  "data_citation": [
+    "China Meteorological Administration. China Meteorological Administration Global Merged Surface Temperature (CMA-GMST). https://data.cma.cn/en/#/Visualization/Visualization-detail?id=16.",
+    "China Meteorological Administration. SDK Download Guidance. https://data.cma.cn/en/#/Visualization/cra-api.",
+    "CMA-GMST Dataset ID: 1.2.156.416.CMA.D3.NMIC.DAT.0000.20240528.BA.000C."
+  ],
+  "acknowledgement": "CMA-SST/CMA-GMST data were obtained from the China Meteorological Administration data service. Record the exact access date and source file used during processing.",
+  "colour": "black",
+  "zpos": 95,
+  "origin": "obs",
+  "notes": "CMA product id 16 is documented by the CMA portal as CMA-GMST, a land-ocean merged gridded historical surface-temperature anomaly product. The API fetcher requires local CMDCapi.py and CMA_USER_ID. The authenticated API currently returns yearly ZIP files containing monthly 2-degree NetCDF grids, for example SURF_CLI_GLB_MST_MON_GRID_2DEG_185301.nc, not a single global monthly anomaly CSV. The CMA API fetcher writes CMA-SST_Global_Month_Temp_1981_2010.csv only after inspecting the NetCDF schema, identifying the gridded anomaly variable, parsing complete monthly year-month coverage, and passing cosine-latitude area-weighted global mean QC. The generated CMA series still requires reference reconciliation because the current CMA API grids do not numerically match the reference precomputed CMA-SST CSV.",
+  "datasets": [
+    {
+      "url": [
+        "https://data.cma.cn/en/#/Visualization/Visualization-detail?id=16"
+      ],
+      "filename": [
+        "CMA-SST_Global_Month_Temp_1981_2010.csv"
+      ],
+      "type": "timeseries",
+      "long_name": "Global sea-surface temperature anomaly",
+      "time_resolution": "monthly",
+      "space_resolution": 999,
+      "climatology_start": 1981,
+      "climatology_end": 2010,
+      "actual": false,
+      "derived": false,
+      "history": [],
+      "reader": "reader_cma_gmst",
+      "fetcher": "fetcher_cma_api"
+    }
+  ]
+}

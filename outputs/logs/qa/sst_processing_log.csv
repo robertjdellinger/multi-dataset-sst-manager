@@ -1,0 +1,6 @@
+dataset,output,status,message
+CMA-SST,sst_CMA_SST.csv,processed,"1850-2025, 176 rows"
+CMEMS-SST,sst_CMEMS_SST.csv,processed,"1982-2024, 43 rows"
+DCENT-SST-I,sst_DCENT_SST_I.csv,processed,"1850-2025, 176 rows"
+ERSST-v6,sst_ERSST_v6.csv,processed,"1850-2025, 176 rows"
+HadSST4-SST,sst_HadSST4.csv,processed,"1850-2025, 176 rows"

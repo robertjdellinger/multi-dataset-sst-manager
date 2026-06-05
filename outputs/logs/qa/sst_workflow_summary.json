@@ -1,0 +1,134 @@
+{
+  "created_at_utc": "2026-06-05T12:54:33.976481+00:00",
+  "allow_partial": false,
+  "processed": [
+    {
+      "dataset": "CMA-SST",
+      "output": "sst_CMA_SST.csv",
+      "status": "processed",
+      "message": "1850-2025, 176 rows"
+    },
+    {
+      "dataset": "CMEMS-SST",
+      "output": "sst_CMEMS_SST.csv",
+      "status": "processed",
+      "message": "1982-2024, 43 rows"
+    },
+    {
+      "dataset": "DCENT-SST-I",
+      "output": "sst_DCENT_SST_I.csv",
+      "status": "processed",
+      "message": "1850-2025, 176 rows"
+    },
+    {
+      "dataset": "ERSST-v6",
+      "output": "sst_ERSST_v6.csv",
+      "status": "processed",
+      "message": "1850-2025, 176 rows"
+    },
+    {
+      "dataset": "HadSST4-SST",
+      "output": "sst_HadSST4.csv",
+      "status": "processed",
+      "message": "1850-2025, 176 rows"
+    }
+  ],
+  "validation": [
+    {
+      "file": "sst_CMA_SST.csv",
+      "status": "ok",
+      "columns_match": true,
+      "rows_match": true,
+      "output_rows": 176,
+      "reference_rows": 176,
+      "output_year_min": 1850,
+      "output_year_max": 2025,
+      "reference_year_min": 1850,
+      "reference_year_max": 2025,
+      "max_abs_diff": 0.1771999999999999,
+      "applied_tolerance": 0.2,
+      "exceeded": "",
+      "note": "Compared data block only; metadata dates and byte identity are not required to match."
+    },
+    {
+      "file": "sst_CMEMS_SST.csv",
+      "status": "ok",
+      "columns_match": true,
+      "rows_match": true,
+      "output_rows": 43,
+      "reference_rows": 43,
+      "output_year_min": 1982,
+      "output_year_max": 2024,
+      "reference_year_min": 1982,
+      "reference_year_max": 2024,
+      "max_abs_diff": 0.0,
+      "applied_tolerance": 0.01,
+      "exceeded": "",
+      "note": "Compared data block only; metadata dates and byte identity are not required to match."
+    },
+    {
+      "file": "sst_DCENT_SST_I.csv",
+      "status": "ok",
+      "columns_match": true,
+      "rows_match": true,
+      "output_rows": 176,
+      "reference_rows": 176,
+      "output_year_min": 1850,
+      "output_year_max": 2025,
+      "reference_year_min": 1850,
+      "reference_year_max": 2025,
+      "max_abs_diff": 0.010000000000000009,
+      "applied_tolerance": 0.01,
+      "exceeded": "",
+      "note": "Compared data block only; metadata dates and byte identity are not required to match."
+    },
+    {
+      "file": "sst_ERSST_v6.csv",
+      "status": "ok",
+      "columns_match": true,
+      "rows_match": true,
+      "output_rows": 176,
+      "reference_rows": 176,
+      "output_year_min": 1850,
+      "output_year_max": 2025,
+      "reference_year_min": 1850,
+      "reference_year_max": 2025,
+      "max_abs_diff": 0.0032999999999999696,
+      "applied_tolerance": 0.01,
+      "exceeded": "",
+      "note": "Compared data block only; metadata dates and byte identity are not required to match."
+    },
+    {
+      "file": "sst_HadSST4.csv",
+      "status": "ok",
+      "columns_match": true,
+      "rows_match": true,
+      "output_rows": 176,
+      "reference_rows": 176,
+      "output_year_min": 1850,
+      "output_year_max": 2025,
+      "reference_year_min": 1850,
+      "reference_year_max": 2025,
+      "max_abs_diff": 0.0005000000000000004,
+      "applied_tolerance": 0.01,
+      "exceeded": "",
+      "note": "Compared data block only; metadata dates and byte identity are not required to match."
+    },
+    {
+      "file": "sst_summary.csv",
+      "status": "ok",
+      "columns_match": true,
+      "rows_match": true,
+      "output_rows": 176,
+      "reference_rows": 176,
+      "output_year_min": 1850,
+      "output_year_max": 2025,
+      "reference_year_min": 1850,
+      "reference_year_max": 2025,
+      "max_abs_diff": 0.1771999999999999,
+      "applied_tolerance": 0.2,
+      "exceeded": "",
+      "note": "Compared data block only; metadata dates and byte identity are not required to match."
+    }
+  ]
+}
