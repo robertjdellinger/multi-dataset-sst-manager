@@ -1,0 +1,73 @@
+Conventions,G,BADC-CSV,1
+title,G,Global area-averaged sea-surface temperature anomaly
+last_revised_date,G,2026-06-05
+date_valid,G,2026-06-05
+feature_type,G,area average
+creator,G,WMO
+source,G,Produced by climind version 1.4.0
+observation_station,G,derived data
+location,G,90.,-180.,-90.,180.
+activity,G,WMO
+history,G,"Data set created from file ['global_omi_tempsal_sst_area_averaged_anomalies_19820101-20241231_R19912020_P20250516.nc'] downloaded from ['https://data.marine.copernicus.eu/product/GLOBAL_OMI_TEMPSAL_sst_area_averaged_anomalies/services'] at ['2026-06-04 19:24:16']"
+history,G,"Calculated annual average from monthly averages using arithmetic mean"
+history,G,"Rebaselined to 1991-2020 by subtracting the arithemtic mean for that period from all data values."
+history,G,"Selected years within the range 1850 to 2025."
+reference,G,"Mulet, S., Nardelli, B. B., Good, S., Pisano, A., Greiner, E., Monier, M., Autret, E., Axell, L., Boberg, F., and Ciliberti, S. (2018). Ocean temperature and salinity. In: Copernicus Marine Service Ocean State Report, Issue 2. Journal of Operational Oceanography, 11(Sup1), s11-s54. https://doi.org/10.1080/1755876X.2018.1489208."
+reference,G,"Good, S. A., Kennedy, J. J., and Embury, O. (2020). Global sea surface temperature anomalies in 2018 and historical changes since 1993. In: von Schuckmann et al. 2020, Copernicus Marine Service Ocean State Report, Issue 4. Journal of Operational Oceanography, 13(sup1), S1-S172. https://doi.org/10.1080/1755876X.2020.1785097."
+rights,G,TBD
+comments,G,Data produced by climind version 1.4.0
+comments,G,Format description https://help.ceda.ac.uk/article/105-badc-csv
+comments,G,"Original data acknowledgement: CMEMS SST data were obtained from the Copernicus Marine Service. Record the exact access date, product identifier, source service, and source filename used during processing."
+long_name,time,time,days since 1800-01-01 00:00:00.0
+type,time,int
+long_name,year,year,1
+type,year,int
+long_name,data,sst,degC
+type,data,float
+coordinate_variable,time,t
+data
+time,year,data
+66474,1982,-0.2435
+66839,1983,-0.1385
+67204,1984,-0.2644
+67570,1985,-0.2776
+67935,1986,-0.2163
+68300,1987,-0.1059
+68665,1988,-0.1385
+69031,1989,-0.1590
+69396,1990,-0.0307
+69761,1991,-0.1028
+70126,1992,-0.2208
+70492,1993,-0.2250
+70857,1994,-0.1915
+71222,1995,-0.1132
+71587,1996,-0.1906
+71953,1997,-0.0497
+72318,1998,0.0362
+72683,1999,-0.1622
+73048,2000,-0.1257
+73414,2001,-0.0016
+73779,2002,-0.0038
+74144,2003,0.0321
+74509,2004,0.0185
+74875,2005,0.0363
+75240,2006,0.0209
+75605,2007,-0.0722
+75970,2008,-0.0915
+76336,2009,0.0316
+76701,2010,0.0379
+77066,2011,-0.0718
+77431,2012,-0.0051
+77797,2013,0.0546
+78162,2014,0.1188
+78527,2015,0.2066
+78892,2016,0.2538
+79258,2017,0.1880
+79623,2018,0.1153
+79988,2019,0.2458
+80353,2020,0.2311
+80719,2021,0.1349
+81084,2022,0.1492
+81449,2023,0.3999
+81814,2024,0.4647
+end data

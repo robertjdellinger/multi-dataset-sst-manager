@@ -47,6 +47,24 @@ MANIFEST
 .coverage.*
 .pytest_cache/
 
+# Local source data downloaded by SST workflows
+data/raw/
+
+# macOS Finder metadata
+.DS_Store
+
+# One-off scratch inventory captured before the SST adaptation
+repo_file_inventory_before_sst_adaptation.txt
+
+# Verbose SST build run logs (regenerated build artifacts). The reviewed,
+# structured QA outputs (outputs/logs/qa/*.csv and *.json) are tracked.
+outputs/logs/qa/*.log
+
+# Local-only CMA CMDC SDK helper files
+climind/fetchers/local_sdk/
+climind/fetchers/CMDCapi.py
+climind/fetchers/CMDCapi.zip
+
 
 # PyCharm
 #  JetBrains specific template is maintained in a separate JetBrains.gitignore that can

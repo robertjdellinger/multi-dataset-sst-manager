@@ -1,0 +1,47 @@
+{
+  "name": "HadSST4-SST",
+  "display_name": "HadSST4",
+  "version": "4.2.0.0",
+  "variable": "sst",
+  "units": "degC",
+  "citation": [
+    "Kennedy, J. J., Rayner, N. A., Atkinson, C. P., and Killick, R. E. (2019). An ensemble data set of sea-surface temperature change from 1850: the Met Office Hadley Centre HadSST.4.0.0.0 data set. Journal of Geophysical Research: Atmospheres, 124, 7719-7763. https://doi.org/10.1029/2018JD029867.",
+    "Sandford, C., and Rayner, N. (2026). Addressing the World War 2 Warm Anomaly in HadSST.4.2.0.0. International Journal of Climatology. https://doi.org/10.1002/joc.70388."
+  ],
+  "citation_url": [
+    "https://doi.org/10.1029/2018JD029867",
+    "https://doi.org/10.1002/joc.70388"
+  ],
+  "data_citation": [
+    "Met Office Hadley Centre. HadSST.4.2.0.0 sea-surface temperature dataset. https://www.metoffice.gov.uk/hadobs/hadsst4/.",
+    "HadSST4 download landing page. https://www.metoffice.gov.uk/hadobs/hadsst4/data/download.html.",
+    "Monthly dataset: HadSST.4.2.0.0_monthly_GLOBE.csv.",
+    "Annual dataset: HadSST.4.2.0.0_annual_GLOBE.csv."
+  ],
+  "acknowledgement": "HadSST.4.2.0.0 data were obtained from http://www.metoffice.gov.uk/hadobs/hadsst4 and are Crown Copyright, Met Office, provided under an Open Government Licence v3.",
+  "colour": "seagreen",
+  "zpos": 99,
+  "origin": "obs",
+  "notes": "The required formatted SST output uses HadSST.4.2.0.0_monthly_GLOBE.csv as the active source and annualizes monthly values with arithmetic means. The annual global CSV is retained as a validation source.",
+  "datasets": [
+    {
+      "url": [
+        "https://www.metoffice.gov.uk/hadobs/hadsst4/data/data/HadSST.4.2.0.0_monthly_GLOBE.csv"
+      ],
+      "filename": [
+        "HadSST.4.2.0.0_monthly_GLOBE.csv"
+      ],
+      "type": "timeseries",
+      "long_name": "Global sea-surface temperature anomaly",
+      "time_resolution": "monthly",
+      "space_resolution": 999,
+      "climatology_start": 1961,
+      "climatology_end": 1990,
+      "actual": false,
+      "derived": false,
+      "history": [],
+      "reader": "reader_hadsst_ts",
+      "fetcher": "fetcher_standard_url"
+    }
+  ]
+}

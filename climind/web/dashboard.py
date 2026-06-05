@@ -16,7 +16,7 @@
 
 import json
 import hashlib
-import pkg_resources
+from importlib.metadata import version
 from datetime import datetime
 from typing import Union, List
 from pathlib import Path
@@ -469,7 +469,7 @@ class Page:
         processed_paragraphs = self._process_paragraphs(data_dir, archive, focus_year=focus_year)
 
         now = datetime.today()
-        climind_version = pkg_resources.get_distribution("climind").version
+        climind_version = version("climind")
 
         self['created'] = f'{now.year}-{now.month:02d}-{now.day:02d}'
         self['code_version'] = f'climind v{climind_version}'

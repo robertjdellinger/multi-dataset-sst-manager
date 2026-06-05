@@ -22,8 +22,25 @@ class comprises a :class:`CollectionMetadata` object and a :class:`.DatasetMetad
 """
 import json
 from pathlib import Path
-from jsonschema import validate, RefResolver
+from jsonschema import Draft202012Validator, validate
+from referencing import Registry, Resource
 from climind.definitions import ROOT_DIR
+
+
+def validate_collection_metadata(metadata: dict) -> None:
+    schema_dir = Path(ROOT_DIR) / 'climind' / 'data_manager'
+    with open(schema_dir / 'metadata_schema.json') as f:
+        metadata_schema = json.load(f)
+    with open(schema_dir / 'dataset_schema.json') as f:
+        dataset_schema = json.load(f)
+
+    registry = Registry().with_resources(
+        [
+            ('metadata_schema', Resource.from_contents(metadata_schema)),
+            ('dataset_schema.json', Resource.from_contents(dataset_schema)),
+        ]
+    )
+    Draft202012Validator(metadata_schema, registry=registry).validate(metadata)
 
 
 def list_match(list_to_match: list, attribute: str) -> bool:
@@ -169,11 +186,7 @@ class CollectionMetadata(BaseMetadata):
         metadata: dict
             Dictionary containing metadata in key value pairs.
         """
-        schema_path = Path(ROOT_DIR) / 'climind' / 'data_manager' / 'metadata_schema.json'
-        with open(schema_path) as f:
-            metadata_schema = json.load(f)
-        resolver = RefResolver(schema_path.as_uri(), metadata_schema)
-        validate(metadata, metadata_schema, resolver=resolver)
+        validate_collection_metadata(metadata)
 
         super().__init__(metadata)
 
@@ -298,11 +311,7 @@ class CombinedMetadata:
         rebuilt = self.collection.metadata
         rebuilt['datasets'] = [self.dataset.metadata]
 
-        schema_path = Path(ROOT_DIR) / 'climind' / 'data_manager' / 'metadata_schema.json'
-        with open(schema_path) as f:
-            metadata_schema = json.load(f)
-        resolver = RefResolver(schema_path.as_uri(), metadata_schema)
-        validate(rebuilt, metadata_schema, resolver=resolver)
+        validate_collection_metadata(rebuilt)
 
         with open(filename, 'w') as out_json:
             json.dump(rebuilt, out_json, indent=4)

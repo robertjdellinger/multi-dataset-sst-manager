@@ -17,7 +17,6 @@
 import copy
 
 import pandas as pd
-import pkg_resources
 import itertools
 import xarray as xa
 import numpy as np

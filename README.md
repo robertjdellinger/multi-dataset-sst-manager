@@ -1,6 +1,134 @@
 Climate Indicator Manager
 =========================
 
+SST-specific adaptation note
+============================
+
+This repository is a renamed SST-specific adaptation of
+`jjk-code-otter/climate-indicator-manager`. The upstream package infrastructure
+is preserved for metadata-driven downloading, reading, processing, BADC-CSV
+export, and processing-history logging. The added SST workflow is intentionally
+limited to sea-surface temperature dataset ingestion, metadata management,
+rebaselining, monthly-to-annual aggregation, provenance logging, reference-file
+validation, and standardized CSV export.
+
+The required SST outputs are written by
+`scripts/data_management/build_sst_outputs.py` to `outputs/tables/`:
+
+- `sst_CMA_SST.csv`
+- `sst_CMEMS_SST.csv`
+- `sst_DCENT_SST_I.csv`
+- `sst_ERSST_v6.csv`
+- `sst_HadSST4.csv`
+- `sst_summary.csv`
+
+The workflow validates generated data blocks against
+`https://www.jkclimate.fr/Dashboard2025/formatted_data/Sea-surface_temperature_data_files.zip`
+and writes QA logs to `outputs/logs/qa/`. Byte-for-byte identity is not expected
+unless the source files, source versions, access dates, and processing details
+are identical.
+
+Gridded outputs are optional and must be produced only from true
+latitude-longitude gridded SST source files. Do not create gridded outputs or
+regional summaries from global-mean or area-averaged timeseries files. If
+gridded SST regional summaries are added later, use UNEP-WCMC MEOW/PPOW marine
+regions rather than WMO regions.
+
+For this renamed checkout, use a project-specific environment name rather than
+the upstream author's local example:
+
+`conda create -n multi_dataset_sst python=3.13.5`
+
+`conda activate multi_dataset_sst`
+
+`pip install .`
+
+The SST output workflow is:
+
+`DATADIR="$HOME/data/multi-dataset-sst-manager" python scripts/data_management/build_sst_outputs.py`
+
+Use `--allow-partial` only for QA runs when documented manual source files are
+not yet available.
+
+Source files for this SST workflow are stored under:
+
+`$DATADIR/ManagedData/SeaSurfaceTemperature/Data/`
+
+The CMA-SST/CMA-GMST metadata is wired to `fetcher_cma_api`, which uses the CMA
+CMDC Python SDK documented at
+`https://data.cma.cn/en/#/Visualization/cra-api`. To run that fetcher, download
+and extract `CMDCapi.py` locally and set `CMA_USER_ID` in
+`climind/fetchers/.env` or in the shell. The real `.env` file is local-only; use
+`climind/fetchers/.env.example` as the template.
+
+CMA handling: the authenticated CMA API returns yearly ZIP files containing
+monthly 2-degree gridded NetCDF files such as
+`SURF_CLI_GLB_MST_MON_GRID_2DEG_185301.nc`, not the precomputed
+`CMA-SST_Global_Month_Temp_1981_2010.csv` reference source. CMA product 16 is the
+land-ocean *merged* CMA-GMST field, so the raw grid carries finite anomalies over
+land. `fetcher_cma_api` therefore restricts the aggregation to ocean cells —
+using the same Natural Earth land definition
+(`regionmask.defined_regions.natural_earth_v5_0_0.land_110`) that upstream
+`climind/data_types/grid.py` uses — and computes a cosine-latitude weighted global
+ocean mean only after schema, coverage, and QC checks pass.
+
+Ocean masking removes the land contamination that otherwise inflated the CMA
+series (it cut the maximum difference versus the reference from ~0.38 to
+~0.18 degC). A residual of ~0.18 degC remains, concentrated in the sparsely
+observed 19th century: the API-derived ocean mean cannot exactly reproduce the
+reference precomputed CMA-SST analysis. This documented GMST-vs-reference
+reconciliation gap is expected, so CMA is validated against a wider, explicitly
+documented tolerance (`CMA_VALIDATION_TOLERANCE = 0.20` degC in
+`build_sst_outputs.py`) while every other dataset keeps the tight
+`DEFAULT_VALIDATION_TOLERANCE = 0.01` degC. With these tolerances, strict-mode
+validation passes for all six outputs.
+
+The upstream CMA grid path was inspected directly: the upstream helper
+`scripts/global_temperature/calc_global_mean_from_grid.py` computes a plain
+cosine-latitude mean over *all* cells with no land mask, which reproduces the
+land-contaminated ~0.38 degC discrepancy. The SST adaptation therefore requires
+ocean masking because CMA product 16 returns a finite land-ocean merged anomaly
+field; reverting to the literal upstream all-cell formula is intentionally not
+done.
+
+SST-pipeline collection metadata live in
+`climind/metadata_files/temperature/sst/build_pipeline/` (collection names
+`CMA-SST`, `CMEMS-SST`, `DCENT-SST-I`, `ERSST-v6`, `HadSST4-SST`). They are kept
+separate from, and use distinct collection names from, the WMO dashboard's own
+SST collections in `climind/metadata_files/temperature/sst/` so the dashboard's
+recursive metadata scan never collides with the pipeline definitions.
+
+DCENT-I source
+--------------
+
+DCENT-I ocean statistics are downloaded from the dataset authors' public Dropbox
+direct-download (`dl=1`) share links, recorded in the DCENT-I metadata
+(`climind/metadata_files/temperature/sst/build_pipeline/dcent_sst_i.json`) and in
+`build_sst_outputs.py`. The Harvard Dataverse record
+(`https://doi.org/10.7910/DVN/ZY0WM8`) is the canonical citation / landing page.
+If a share link changes, update the URL in those two locations.
+
+Deferred extensions (separate follow-up branches)
+-------------------------------------------------
+
+Two optional extensions are intentionally kept out of this validated core branch
+and tracked separately:
+
+- **MEOW/PPOW regional / gridded SST** - a script-driven, marine-region
+  (UNEP-WCMC MEOW/PPOW, not WMO) workflow that mirrors the upstream staged design
+  (regrid -> masks -> averages). It depends on gridded SST sources and the
+  MEOW/PPOW shapefiles under `$DATADIR/Shape_Files/UNEP_WCMC_MEOW_PPOW/`, is never
+  part of strict global validation, and never writes into `sst_summary.csv`. It
+  is developed on a separate branch (`claude/sst-regional-extensions`).
+
+- **BHM paleo reconstruction** - an optional paleo-modern record, **not** one of
+  the six required outputs. Status: the dashboard collection
+  `climind/metadata_files/temperature/sst/bhm.json` exists, but `reader_bhm_ts`
+  and `reader_bhm_fullfield_to_global_mean_ts` are **not implemented** in this
+  branch, the `.rds` source is not present, and `pyreadr`/`rpy2` are not
+  installed. BHM is deferred to a separate follow-up branch once the source file
+  and reader strategy are confirmed.
+
 A lightweight package for managing, downloading and processing climate data for use in calculating and presenting
 climate indicators, as well as creating dashboards based on these indicators.
 

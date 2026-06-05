@@ -19,11 +19,11 @@ import pytest
 import json
 from pathlib import Path
 
-from jsonschema import ValidationError, validate, RefResolver
+from jsonschema import ValidationError, validate
 
 from climind.definitions import ROOT_DIR
 from climind.data_manager.metadata import DatasetMetadata, CollectionMetadata, BaseMetadata, CombinedMetadata, \
-    list_match
+    list_match, validate_collection_metadata
 
 schema_path = Path(ROOT_DIR) / 'climind' / 'data_manager' / 'dataset_schema.json'
 with open(schema_path) as f:
@@ -282,11 +282,7 @@ def test_combined_write(test_dataset_attributes, test_collection_attributes, tmp
     with open(json_file, 'r') as test_file:
         read_in_json = json.load(test_file)
 
-    schema_path = Path(ROOT_DIR) / 'climind' / 'data_manager' / 'metadata_schema.json'
-    with open(schema_path) as f:
-        metadata_schema = json.load(f)
-    resolver = RefResolver(schema_path.as_uri(), metadata_schema)
-    validate(read_in_json, metadata_schema, resolver=resolver)
+    validate_collection_metadata(read_in_json)
 
 
 def test_combined_creation_message(test_dataset_attributes, test_collection_attributes):

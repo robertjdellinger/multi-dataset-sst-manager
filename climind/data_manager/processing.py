@@ -27,11 +27,9 @@ import json
 from urllib.parse import parse_qs
 import os
 
-from jsonschema import validate, RefResolver
 from typing import Callable, List, Union
 from pathlib import Path
-from climind.data_manager.metadata import CollectionMetadata, DatasetMetadata, CombinedMetadata
-from climind.definitions import ROOT_DIR
+from climind.data_manager.metadata import CollectionMetadata, DatasetMetadata, CombinedMetadata, validate_collection_metadata
 
 
 def get_function(module_path: str, script_name: str, function_name: str) -> Callable:
@@ -268,12 +266,7 @@ class DataCollection:
         with open(filename, 'r') as f:
             metadata_from_file = json.load(f)
 
-        schema_path = Path(ROOT_DIR) / 'climind' / 'data_manager' / 'metadata_schema.json'
-        with open(schema_path) as f:
-            metadata_schema = json.load(f)
-
-        resolver = RefResolver(schema_path.as_uri(), metadata_schema)
-        validate(metadata_from_file, metadata_schema, resolver=resolver)
+        validate_collection_metadata(metadata_from_file)
 
         return DataCollection(metadata_from_file)
 
@@ -291,11 +284,7 @@ class DataCollection:
         for key in self.datasets:
             rebuilt['datasets'].append(key.metadata.dataset.metadata)
 
-        schema_path = Path(ROOT_DIR) / 'climind' / 'data_manager' / 'metadata_schema.json'
-        with open(schema_path) as f:
-            metadata_schema = json.load(f)
-        resolver = RefResolver(schema_path.as_uri(), metadata_schema)
-        validate(rebuilt, metadata_schema, resolver=resolver)
+        validate_collection_metadata(rebuilt)
 
         return rebuilt
 

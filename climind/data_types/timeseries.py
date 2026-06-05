@@ -20,7 +20,7 @@ import pandas as pd
 import numpy as np
 import logging
 import copy
-import pkg_resources
+from importlib.metadata import version
 from abc import ABC, abstractmethod
 from pathlib import Path
 from functools import reduce
@@ -209,7 +209,7 @@ class TimeSeries(ABC):
             self.metadata.write_metadata(metadata_filename)
 
         now = datetime.today()
-        climind_version = pkg_resources.get_distribution("climind").version
+        climind_version = version("climind")
 
         time_units = 'days since 1800-01-01 00:00:00.0'
         self.df['time'] = self.generate_dates(time_units)
@@ -1251,14 +1251,14 @@ class TimeSeriesAnnual(TimeSeries):
             years to calculate a trend, np.nan appears in the data column of the data frame
         """
         moving_average = copy.deepcopy(self)
-        moving_average.df.data[0:run_length] = np.nan
+        moving_average.df.loc[moving_average.df.index[:run_length], 'data'] = np.nan
 
         for i in range(run_length - 1, len(self.df.data)):
             snippet = self.df.data[i - run_length + 1:i + 1]
             time = self.get_year_axis()[i - run_length + 1:i + 1]
 
             m, b = np.polyfit(time, snippet, 1)
-            moving_average.df.data[i] = b + m * time.values[-1]
+            moving_average.df.loc[moving_average.df.index[i], 'data'] = b + m * time.values[-1]
 
         moving_average.update_history(f'Calculated smoothed series with {run_length}-year trends')
         moving_average.metadata['derived'] = True
@@ -1280,7 +1280,7 @@ class TimeSeriesAnnual(TimeSeries):
 
         """
         moving_average = copy.deepcopy(self)
-        moving_average.df.data[0:number_of_points] = np.nan
+        moving_average.df.loc[moving_average.df.index[:number_of_points], 'data'] = np.nan
 
         for i in range(number_of_points, len(self.df.data)):
             snippet = self.df.data[0:i + 1]
@@ -1289,7 +1289,7 @@ class TimeSeriesAnnual(TimeSeries):
             fraction_of_data = number_of_points / len(snippet)
 
             fit = lowess(snippet, time, fraction_of_data)
-            moving_average.df.data[i] = fit[i, 1]
+            moving_average.df.loc[moving_average.df.index[i], 'data'] = fit[i, 1]
 
         moving_average.update_history(
             f'Calculated lowess smoothed series with {fraction_of_data} of data used for each fit')
@@ -1317,7 +1317,7 @@ class TimeSeriesAnnual(TimeSeries):
         fraction_of_data = number_of_points / len(snippet)
 
         fit = lowess(snippet, time, fraction_of_data)
-        moving_average.df.data[:] = fit[:, 1]
+        moving_average.df.loc[:, 'data'] = fit[:, 1]
 
         moving_average.update_history(
             f'Calculated lowess smoothed series with {fraction_of_data} of data used for each fit')
@@ -1827,7 +1827,7 @@ def write_dataset_summary_file_with_metadata(
     """
     # Set up the information to fill the template
     now = datetime.today()
-    climind_version = pkg_resources.get_distribution("climind").version
+    climind_version = version("climind")
     time_units = 'days since 1800-01-01 00:00:00.0'
     for ds in all_datasets:
         ds.df['time'] = ds.generate_dates(time_units)

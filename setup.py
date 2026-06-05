@@ -28,7 +28,7 @@ setup(
               'climind.web'],
     # Needed for dependencies
     install_requires=['pytest', 'numpy', 'requests', 'beautifulsoup4',
-                      'pandas', 'jsonschema', 'matplotlib', 'seaborn', 'xarray',
+                      'pandas<3', 'setuptools<81', 'jsonschema', 'matplotlib', 'seaborn', 'xarray',
                       'python-dotenv', 'regionmask', 'geopandas', 'shapely',
                       'cdsapi', 'cartopy', 'cftime', 'jinja2', 'python-docx','statsmodels',
                       'netCDF4', 'h5netcdf', 'pytest-mock','datawrapper', 'scipy', 'dask', 'openpyxl'],

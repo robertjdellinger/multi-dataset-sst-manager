@@ -138,7 +138,7 @@ def simple_annual(annual_metadata):
 
 def test_get_values(simple_annual):
     copy_annual = copy.deepcopy(simple_annual)
-    copy_annual.df.data[0] = 5.0
+    copy_annual.df.loc[0, 'data'] = 5.0
 
     values = utils.get_values([simple_annual, copy_annual], 2022)
     assert values[0] == 2022 / 1000.
@@ -151,7 +151,7 @@ def test_get_values(simple_annual):
 
 def test_get_ranks(simple_annual):
     copy_annual = copy.deepcopy(simple_annual)
-    copy_annual.df.data[0] = 5.0
+    copy_annual.df.loc[0, 'data'] = 5.0
 
     values = utils.get_ranks([simple_annual, copy_annual], 2022)
     assert values[0] == 1
@@ -164,7 +164,7 @@ def test_get_ranks(simple_annual):
 
 def test_table_by_year(simple_annual):
     copy_annual = copy.deepcopy(simple_annual)
-    copy_annual.df.data[0] = 5.0
+    copy_annual.df.loc[0, 'data'] = 5.0
 
     table = utils.table_by_year([simple_annual, copy_annual], 2022)
 
@@ -189,7 +189,7 @@ def test_table_by_year(simple_annual):
 
 def test_record_margin_table_by_year(simple_annual):
     copy_annual = copy.deepcopy(simple_annual)
-    copy_annual.df.data[0] = 5.0
+    copy_annual.df.loc[0, 'data'] = 5.0
 
     table = utils.record_margin_table_by_year([simple_annual, copy_annual], 2022)
     assert table[-28:] == '2022 0.00       ---------  \n'
@@ -201,7 +201,7 @@ def test_record_margin_table_by_year(simple_annual):
 
 def test_run_the_numbers(simple_annual, tmpdir):
     copy_annual = copy.deepcopy(simple_annual)
-    copy_annual.df.data[0] = 5.0
+    copy_annual.df.loc[0, 'data'] = 5.0
 
     all_datasets = [simple_annual, copy_annual]
 
@@ -212,7 +212,7 @@ def test_run_the_numbers(simple_annual, tmpdir):
 
 def test_record_margins(simple_annual, tmpdir):
     copy_annual = copy.deepcopy(simple_annual)
-    copy_annual.df.data[0] = 5.0
+    copy_annual.df.loc[0, 'data'] = 5.0
 
     all_datasets = [simple_annual, copy_annual]
 

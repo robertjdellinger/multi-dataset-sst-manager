@@ -655,11 +655,11 @@ def test_get_value_monthly_non_existent_month(simple_monthly, uncertainty_monthl
 
 
 def test_get_value_monthly_with_duplicate_raises_key_error(simple_monthly, uncertainty_monthly):
-    simple_monthly.df['month'][1] = 1
+    simple_monthly.df.loc[1, 'month'] = 1
     with pytest.raises(KeyError):
         _ = simple_monthly.get_value(1850, 1)
 
-    uncertainty_monthly.df['month'][1] = 1
+    uncertainty_monthly.df.loc[1, 'month'] = 1
     with pytest.raises(KeyError):
         _ = uncertainty_monthly.get_uncertainty(1850, 1)
 
@@ -837,7 +837,7 @@ def test_record_margins_negative(simple_annual):
 
 
 def test_record_margins_with_nonrecord(simple_annual):
-    simple_annual.df.data[120] = simple_annual.df.data[118]
+    simple_annual.df.loc[120, 'data'] = simple_annual.df.loc[118, 'data']
     margins = simple_annual.record_margins()
 
     # first element is nan
@@ -926,7 +926,7 @@ def test_ranking_annual_no_match(simple_annual):
 
 
 def test_ranking_with_ties_annual(simple_annual):
-    simple_annual.df['data'][2022 - 1850] = 2021. / 1000.
+    simple_annual.df.loc[2022 - 1850, 'data'] = 2021. / 1000.
     rank2 = simple_annual.get_rank_from_year(2022)
     rank1 = simple_annual.get_rank_from_year(2021)
     assert rank1 == rank2

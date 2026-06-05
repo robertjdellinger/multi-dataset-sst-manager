@@ -276,7 +276,7 @@ def test_global_anomaly_and_rank(simple_annual):
 
 
 def test_global_anomaly_and_rank_missing_value(simple_annual):
-    simple_annual.df.data[2022 - 1850] = None
+    simple_annual.df.loc[2022 - 1850, 'data'] = None
     test_text = pg.global_anomaly_and_rank([simple_annual], 2022)
 
     assert isinstance(test_text, str)
@@ -337,7 +337,7 @@ def test_basic_anomaly_and_rank_latest_year_is_not_this_year(simple_annual):
 
 
 def test_basic_anomaly_and_rank_year_is_missing_data(simple_annual):
-    simple_annual.df.data[2022 - 1850] = None
+    simple_annual.df.loc[2022 - 1850, 'data'] = None
     test_text = pg.basic_anomaly_and_rank([simple_annual], 2022)
 
     assert isinstance(test_text, str)
@@ -669,20 +669,20 @@ def test_compare_to_highest_anomaly_and_rank(simple_annual_list):
     assert isinstance(test_text, str)
     assert test_text == ''
 
-    simple_annual_list[0].df['data'][2022 - 1850] = 2.0205
+    simple_annual_list[0].df.loc[2022 - 1850, 'data'] = 2.0205
     test_text = pg.compare_to_highest_anomaly_and_rank(simple_annual_list, 2022)
     assert isinstance(test_text, str)
     assert test_text != ''
     assert '2022 is joint warmest on record together with 2021' in test_text
 
-    simple_annual_list[1].df['data'][2022 - 1850] = 2.0205
+    simple_annual_list[1].df.loc[2022 - 1850, 'data'] = 2.0205
     test_text = pg.compare_to_highest_anomaly_and_rank(simple_annual_list, 2022)
     assert isinstance(test_text, str)
     assert test_text != ''
     assert 'The warmest year on record was 2021 with a value' in test_text
 
-    simple_annual_list[1].df['data'][2022 - 1850] = 2.0195
-    simple_annual_list[1].df['data'][2021 - 1850] = 2.0195
+    simple_annual_list[1].df.loc[2022 - 1850, 'data'] = 2.0195
+    simple_annual_list[1].df.loc[2021 - 1850, 'data'] = 2.0195
     test_text = pg.compare_to_highest_anomaly_and_rank(simple_annual_list, 2022)
     assert isinstance(test_text, str)
     assert test_text != ''
@@ -695,7 +695,7 @@ def test_compare_to_highest_anomaly_and_rank(simple_annual_list):
 
 
 def test_compare_to_highest_anomaly_and_rank_missing_value(simple_annual):
-    simple_annual.df.data[2022 - 1850] = None
+    simple_annual.df.loc[2022 - 1850, 'data'] = None
     test_text = pg.compare_to_highest_anomaly_and_rank([simple_annual], 2022)
     assert isinstance(test_text, str)
     assert test_text == 'No data for 2022.'
@@ -722,7 +722,7 @@ def test_greenland_ice_sheet_monthly(simple_monthly):
 
 def test_greenland_ice_sheet_monthly_increasing_loss(simple_monthly):
     simple_monthly.df.data = -1 * simple_monthly.df.data
-    simple_monthly.df.data[12 * (2022 - 1850):] = -2023.
+    simple_monthly.df.loc[12 * (2022 - 1850):, 'data'] = -2023.
     test_text = pg.greenland_ice_sheet_monthly([simple_monthly], 2022)
 
     assert isinstance(test_text, str)
@@ -732,7 +732,7 @@ def test_greenland_ice_sheet_monthly_increasing_loss(simple_monthly):
 
 def test_greenland_ice_sheet_monthly_decreasing_loss(simple_monthly):
     simple_monthly.df.data = -1 * simple_monthly.df.data
-    simple_monthly.df.data[12 * (2022 - 1850):] = -2021.5
+    simple_monthly.df.loc[12 * (2022 - 1850):, 'data'] = -2021.5
     test_text = pg.greenland_ice_sheet_monthly([simple_monthly], 2022)
 
     assert isinstance(test_text, str)
