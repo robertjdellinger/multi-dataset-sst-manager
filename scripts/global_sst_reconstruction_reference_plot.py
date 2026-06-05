@@ -1,0 +1,318 @@
+#  Climate indicator manager - a package for managing and building climate indicator dashboards.
+#
+#  scripts/global_sst_reconstruction_reference_plot.py
+#
+#  1850-2025 reference-style global SST figure (FINAL-spec variant) rendered from
+#  the harmonized annual, 1991-2020-baselined SST table produced by the SST
+#  builder. This is a standalone, add-only visualisation script: it does not
+#  modify any data and does not touch climind/plotters or the WMO dashboard.
+#
+#  Input  (validated merged table written by build_sst_outputs.py):
+#    $DATADIR/ManagedData/SeaSurfaceTemperature/processed/
+#        merged_global_sst_reconstructions_annual_1850_2025_baseline_1991_2020.csv
+#
+#  Output:
+#    $DATADIR/ManagedData/SeaSurfaceTemperature/Figures/
+#        global_sea_surface_temperature_1850_2025_reference_style.png
+#
+#  The merged table is stored in wide form (year + one column per dataset). The
+#  FINAL spec's reference plot consumes a long form (dataset, year, sst_anomaly),
+#  so this script normalises wide -> long before plotting.
+
+from __future__ import annotations
+
+import os
+import textwrap
+from pathlib import Path
+
+import matplotlib
+
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
+import pandas as pd
+
+
+DATASET_LEVELS = ["CMA-SST", "CMEMS", "DCENT-I", "ERSSTv6", "HadSST4"]
+
+DATASET_COLORS = {
+    "CMA-SST": "#2259A6",
+    "CMEMS": "#F39C12",
+    "DCENT-I": "#6DBB45",
+    "ERSSTv6": "#22A7C9",
+    "HadSST4": "#009C9C",
+}
+
+# Map the wide merged-table columns and any name variants onto DATASET_LEVELS.
+WIDE_DATASET_COLUMNS = {
+    "CMA_SST": "CMA-SST",
+    "CMEMS_SST": "CMEMS",
+    "DCENT_SST_I": "DCENT-I",
+    "ERSST_v6": "ERSSTv6",
+    "HadSST4": "HadSST4",
+}
+DATASET_ALIASES = {
+    "CMEMS-SST": "CMEMS",
+    "DCENT-SST-I": "DCENT-I",
+    "ERSST-v6": "ERSSTv6",
+    "ERSST v6": "ERSSTv6",
+}
+
+
+def get_sst_managed_dir() -> Path:
+    datadir = os.getenv("DATADIR")
+    if not datadir:
+        raise RuntimeError(
+            "DATADIR is not set. Set it before plotting, for example:\n"
+            'export DATADIR="$HOME/data/multi-dataset-sst-manager"'
+        )
+    return Path(datadir) / "ManagedData" / "SeaSurfaceTemperature"
+
+
+SST_MANAGED_DIR = get_sst_managed_dir()
+
+INPUT_CSV = (
+    SST_MANAGED_DIR
+    / "processed"
+    / "merged_global_sst_reconstructions_annual_1850_2025_baseline_1991_2020.csv"
+)
+OUTPUT_PNG = (
+    SST_MANAGED_DIR
+    / "Figures"
+    / "global_sea_surface_temperature_1850_2025_reference_style.png"
+)
+
+
+def normalize_sst_plot_frame(df: pd.DataFrame) -> pd.DataFrame:
+    """Return a long (dataset, year, sst_anomaly) frame from wide or long input."""
+    if "sst_anomaly" not in df.columns and "anomaly_sst_C" in df.columns:
+        df = df.rename(columns={"anomaly_sst_C": "sst_anomaly"})
+
+    long_required = {"dataset", "year", "sst_anomaly"}
+    if long_required.issubset(df.columns):
+        normalized = df[["dataset", "year", "sst_anomaly"]].copy()
+        normalized["dataset"] = normalized["dataset"].replace(DATASET_ALIASES)
+        return normalized
+
+    wide_columns = list(WIDE_DATASET_COLUMNS)
+    wide_required = {"year", *wide_columns}
+    if wide_required.issubset(df.columns):
+        normalized = df.melt(
+            id_vars="year",
+            value_vars=wide_columns,
+            var_name="dataset",
+            value_name="sst_anomaly",
+        )
+        normalized["dataset"] = normalized["dataset"].replace(WIDE_DATASET_COLUMNS)
+        return normalized
+
+    missing_long = sorted(long_required.difference(df.columns))
+    missing_wide = sorted(wide_required.difference(df.columns))
+    raise ValueError(
+        "Plot input must contain either long columns `dataset`, `year`, "
+        "`sst_anomaly` or the verified wide merged columns. Missing long "
+        "columns: " + ", ".join(missing_long) + ". Missing wide columns: "
+        + ", ".join(missing_wide) + "."
+    )
+
+
+def prepare_sst_plot_data(path: Path) -> pd.DataFrame:
+    if not path.exists():
+        raise FileNotFoundError(
+            f"Missing merged SST file: {path}\n"
+            "Run the SST merge workflow (build_sst_outputs.py) before plotting."
+        )
+
+    df = normalize_sst_plot_frame(pd.read_csv(path))
+
+    df = df.copy()
+    df["dataset"] = pd.Categorical(df["dataset"], categories=DATASET_LEVELS, ordered=True)
+    df["year"] = pd.to_numeric(df["year"], errors="coerce").astype("Int64")
+    df["sst_anomaly"] = pd.to_numeric(df["sst_anomaly"], errors="coerce")
+
+    df = (
+        df.dropna(subset=["dataset", "year", "sst_anomaly"])
+        .assign(year=lambda x: x["year"].astype(int))
+        .sort_values(["dataset", "year"])
+        .reset_index(drop=True)
+    )
+
+    found = list(df["dataset"].dropna().astype(str).unique())
+    missing_datasets = [name for name in DATASET_LEVELS if name not in found]
+    if missing_datasets:
+        raise ValueError(
+            "The merged SST table is missing required dataset(s): "
+            + ", ".join(missing_datasets)
+        )
+
+    return df
+
+
+def make_dataset_labels(df: pd.DataFrame) -> dict[str, str]:
+    labels: dict[str, str] = {}
+    for dataset in DATASET_LEVELS:
+        sub = df[df["dataset"].astype(str) == dataset]
+        if sub.empty:
+            continue
+        first_year = int(sub["year"].min())
+        last_year = int(sub["year"].max())
+        labels[dataset] = f"{dataset} ({first_year}-{last_year})"
+    return labels
+
+
+def make_source_caption(width: int = 118) -> str:
+    caption = (
+        "Sources: CMA-SST, CMEMS GLOBAL_OMI_TEMPSAL SST indicator, DCENT-I, "
+        "NOAA ERSSTv6, Met Office HadSST4; processed annual outputs generated "
+        "by this workflow."
+    )
+    return textwrap.fill(caption, width=width)
+
+
+def set_reference_style(ax: plt.Axes) -> None:
+    ax.set_facecolor("white")
+    ax.figure.set_facecolor("white")
+
+    ax.grid(axis="y", color="#E6E6E6", linewidth=0.8)
+    ax.grid(axis="x", visible=False)
+
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.spines["left"].set_visible(False)
+
+    ax.spines["bottom"].set_color("#666666")
+    ax.spines["bottom"].set_linewidth(0.8)
+
+    ax.tick_params(axis="x", colors="#666666", labelsize=18, width=0.6)
+    ax.tick_params(axis="y", colors="#666666", labelsize=18, length=0)
+
+    ax.xaxis.label.set_color("#666666")
+    ax.yaxis.label.set_color("#666666")
+
+
+def plot_global_sst_reconstructions(
+    sst_merged: pd.DataFrame,
+    title_text: str = "Global Sea-Surface Temperature 1850-2025",
+    subtitle_text: str = "Difference from 1991-2020 average",
+    uncertainty_half_width: float = 0.04,
+    y_limits: tuple[float, float] = (-1.12, 0.60),
+    y_breaks: tuple[float, ...] = (-1.0, -0.5, 0.0, 0.5),
+) -> plt.Figure:
+    df = sst_merged.copy()
+    labels = make_dataset_labels(df)
+
+    fig, ax = plt.subplots(figsize=(13.7, 9.2), dpi=320)
+
+    for dataset in DATASET_LEVELS:
+        sub = df[df["dataset"].astype(str) == dataset].sort_values("year")
+        if sub.empty:
+            continue
+
+        x = sub["year"].to_numpy(dtype=float)
+        y = sub["sst_anomaly"].to_numpy(dtype=float)
+        color = DATASET_COLORS[dataset]
+
+        ax.fill_between(
+            x,
+            y - uncertainty_half_width,
+            y + uncertainty_half_width,
+            color=color,
+            alpha=0.22,
+            linewidth=0,
+        )
+        ax.plot(
+            x,
+            y,
+            color=color,
+            linewidth=1.25,
+            alpha=0.98,
+            label=labels.get(dataset, dataset),
+        )
+
+    ax.set_xlim(1848, 2026)
+    ax.set_xticks(range(1860, 2021, 20))
+
+    ax.set_ylim(*y_limits)
+    ax.set_yticks(y_breaks)
+    ax.yaxis.set_major_formatter(mticker.FormatStrFormatter("%.1f"))
+
+    ax.set_xlabel("Year", fontsize=19, labelpad=5)
+    ax.set_ylabel("Annual SST anomaly (°C)", fontsize=19, labelpad=7)
+
+    set_reference_style(ax)
+
+    fig.suptitle(
+        title_text,
+        x=0.055,
+        y=0.965,
+        ha="left",
+        va="top",
+        fontsize=30,
+        fontweight="normal",
+        color="#555555",
+    )
+    fig.text(
+        0.055,
+        0.915,
+        subtitle_text,
+        ha="left",
+        va="top",
+        fontsize=20,
+        color="#666666",
+    )
+
+    legend = ax.legend(
+        loc="upper left",
+        bbox_to_anchor=(0.0, 1.105),
+        ncol=3,
+        frameon=False,
+        fontsize=14,
+        handlelength=2.3,
+        columnspacing=1.6,
+        handletextpad=0.6,
+    )
+    for text in legend.get_texts():
+        text.set_color("#555555")
+
+    caption = make_source_caption()
+    fig.text(
+        0.055,
+        0.025,
+        caption,
+        ha="left",
+        va="bottom",
+        fontsize=11,
+        color="#777777",
+    )
+
+    fig.subplots_adjust(left=0.085, right=0.985, top=0.82, bottom=0.12)
+    return fig
+
+
+def main() -> None:
+    sst_merged = prepare_sst_plot_data(INPUT_CSV)
+
+    fig = plot_global_sst_reconstructions(
+        sst_merged=sst_merged,
+        title_text="Global Sea-Surface Temperature 1850-2025",
+        subtitle_text="Difference from 1991-2020 average",
+        uncertainty_half_width=0.04,
+        y_limits=(-1.12, 0.60),
+        y_breaks=(-1.0, -0.5, 0.0, 0.5),
+    )
+
+    OUTPUT_PNG.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(
+        OUTPUT_PNG,
+        dpi=320,
+        facecolor="white",
+        edgecolor="none",
+        bbox_inches=None,
+    )
+    plt.close(fig)
+
+    print(f"Wrote {OUTPUT_PNG}")
+
+
+if __name__ == "__main__":
+    main()

@@ -108,26 +108,61 @@ direct-download (`dl=1`) share links, recorded in the DCENT-I metadata
 (`https://doi.org/10.7910/DVN/ZY0WM8`) is the canonical citation / landing page.
 If a share link changes, update the URL in those two locations.
 
-Deferred extensions (separate follow-up branches)
--------------------------------------------------
+Branch scope
+------------
 
-Two optional extensions are intentionally kept out of this validated core branch
-and tracked separately:
+This is the **regional extensions** branch (`claude/sst-regional-extensions`),
+built on top of the validated core branch (`fix/remove-sensitive-sst-links`). It
+adds optional, separately-tracked work and never changes the six required global
+SST outputs or strict global validation.
 
-- **MEOW/PPOW regional / gridded SST** - a script-driven, marine-region
-  (UNEP-WCMC MEOW/PPOW, not WMO) workflow that mirrors the upstream staged design
-  (regrid -> masks -> averages). It depends on gridded SST sources and the
-  MEOW/PPOW shapefiles under `$DATADIR/Shape_Files/UNEP_WCMC_MEOW_PPOW/`, is never
-  part of strict global validation, and never writes into `sst_summary.csv`. It
-  is developed on a separate branch (`claude/sst-regional-extensions`).
+Reference-style figure (standalone)
+-----------------------------------
 
-- **BHM paleo reconstruction** - an optional paleo-modern record, **not** one of
-  the six required outputs. Status: the dashboard collection
-  `climind/metadata_files/temperature/sst/bhm.json` exists, but `reader_bhm_ts`
-  and `reader_bhm_fullfield_to_global_mean_ts` are **not implemented** in this
-  branch, the `.rds` source is not present, and `pyreadr`/`rpy2` are not
-  installed. BHM is deferred to a separate follow-up branch once the source file
-  and reader strategy are confirmed.
+`scripts/global_sst_reconstruction_reference_plot.py` renders the reference-style
+figure (ribbon styling, five datasets) from the validated merged table and writes
+`$DATADIR/ManagedData/SeaSurfaceTemperature/Figures/global_sea_surface_temperature_1850_2025_reference_style.png`.
+It only visualises data and does not touch `climind/plotters` or the WMO
+dashboard. The core branch's
+`scripts/sea_surface_temperature/plot_global_sst_reference_figure.py` remains the
+canonical figure producer.
+
+MEOW/PPOW regional pathway
+--------------------------
+
+Optional gridded/regional SST processing mirrors the upstream staged design
+(regrid -> masks -> averages) but uses UNEP-WCMC **MEOW/PPOW marine** regions
+instead of WMO regions, and never edits the upstream WMO scripts. Scripts under
+`scripts/sea_surface_temperature/`:
+
+- `sst_regional_core.py` - reusable, tested logic (cosine-latitude weighting,
+  area-weighted means with coverage diagnostics, monthly->annual aggregation,
+  eligibility classification, MEOW/PPOW masking, spatial-file validation).
+- `prepare_sst_gridded_inputs.py`, `make_meow_ppow_region_masks.py`,
+  `calculate_sst_meow_ppow_averages.py` - thin CLI drivers; the latter writes the
+  eligibility report `outputs/logs/qa/sst_gridded_regional_eligibility.csv`.
+- `scripts/data_management/download_spatial_reference_data.sh` - fetch Natural
+  Earth and point to the MEOW/PPOW download.
+
+Only **true latitude-longitude gridded SST** datasets are eligible; global-mean
+and area-averaged time series (`space_resolution=999`) are rejected. With the
+current pipeline (all five datasets are time series; CMEMS is an area-averaged
+NetCDF indicator) the eligibility report lists every dataset as excluded - by
+design. Real regional outputs require a gridded SST collection and the MEOW/PPOW
+shapefiles under `$DATADIR/Shape_Files/UNEP_WCMC_MEOW_PPOW/` (https://wcmc.io/WCMC_036;
+local-only, not committed). Synthetic tests in `tests/test_sst_regional.py` cover
+the weighting, missing-data, region-assignment, and non-gridded-exclusion logic
+without those downloads. Regional outputs are never mixed into `sst_summary.csv`.
+
+BHM paleo reconstruction (deferred)
+-----------------------------------
+
+BHM remains an optional paleo-modern record and is **not** implemented on any
+branch yet: the dashboard collection
+`climind/metadata_files/temperature/sst/bhm.json` exists, but `reader_bhm_ts` /
+`reader_bhm_fullfield_to_global_mean_ts` are not implemented, the `.rds` source is
+not present, and `pyreadr`/`rpy2` are not installed. BHM is deferred to a separate
+follow-up once the source file and reader strategy are confirmed.
 
 A lightweight package for managing, downloading and processing climate data for use in calculating and presenting
 climate indicators, as well as creating dashboards based on these indicators.
