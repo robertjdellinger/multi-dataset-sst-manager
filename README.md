@@ -90,6 +90,63 @@ separate from, and use distinct collection names from, the WMO dashboard's own
 SST collections in `climind/metadata_files/temperature/sst/` so the dashboard's
 recursive metadata scan never collides with the pipeline definitions.
 
+Reference-style figure (standalone)
+-----------------------------------
+
+`scripts/global_sst_reconstruction_reference_plot.py` renders the FINAL
+reference-style figure (ribbon styling, five datasets) from the validated merged
+table and writes
+`$DATADIR/ManagedData/SeaSurfaceTemperature/Figures/global_sea_surface_temperature_1850_2025_reference_style.png`.
+It only visualises data and does not touch `climind/plotters` or the WMO
+dashboard. The earlier
+`scripts/sea_surface_temperature/plot_global_sst_reference_figure.py` remains and
+produces the same canonical filename.
+
+Optional BHM paleo record
+-------------------------
+
+BHM (Ossandon et al. paleo SST reconstruction) is an **optional, additional**
+record and is **not** one of the six required outputs. Scaffolding is provided:
+`reader_bhm_fullfield_to_global_mean_ts` reduces the full-field reconstruction to
+a cosine-latitude area-weighted global-mean annual series, and
+`climind/metadata_files/temperature/sst/build_pipeline/bhm_sst.json` (collection
+`BHM-SST`) describes the derived time series. It is **not** wired into the strict
+builder. Processing BHM requires the optional `pyreadr` package and a manual
+download of `1854-2014_MAYtoAPRavg_SST_FullField.rds` (Zenodo; `fetcher_no_url`);
+until both are present the reader raises a clear, actionable error.
+
+Optional MEOW/PPOW regional pathway
+-----------------------------------
+
+Optional gridded/regional SST processing mirrors the upstream staged design
+(regrid -> masks -> averages) but uses UNEP-WCMC **MEOW/PPOW marine** regions
+instead of WMO regions, and never edits the upstream WMO scripts. The SST-specific
+scripts live under `scripts/sea_surface_temperature/`:
+
+- `sst_regional_core.py` - reusable, tested logic (cosine-latitude weighting,
+  area-weighted means with coverage diagnostics, monthly->annual aggregation,
+  eligibility classification, MEOW/PPOW masking).
+- `prepare_sst_gridded_inputs.py` - standardise gridded SST (longitude
+  convention, latitude order, annualisation with coverage threshold).
+- `make_meow_ppow_region_masks.py` - validate the MEOW/PPOW vector file and build
+  region masks under `$DATADIR/ManagedData/SeaSurfaceTemperature/region_masks/`.
+- `calculate_sst_meow_ppow_averages.py` - write the eligibility report
+  (`outputs/logs/qa/sst_gridded_regional_eligibility.csv`) and, when an eligible
+  gridded SST source and masks exist, area-weighted regional summaries under
+  `$DATADIR/ManagedData/SeaSurfaceTemperature/regional/`.
+
+Only **true latitude-longitude gridded SST** datasets are eligible; global-mean
+and area-averaged time series (`space_resolution=999`) are rejected. With the
+current pipeline (all five datasets are time series, and CMEMS is an
+area-averaged NetCDF indicator) the eligibility report lists every dataset as
+excluded - by design. To produce real regional outputs, add a gridded SST
+collection and place the MEOW/PPOW shapefiles under
+`$DATADIR/Shape_Files/UNEP_WCMC_MEOW_PPOW/` (download from https://wcmc.io/WCMC_036;
+local-only, not committed). Synthetic tests in `tests/test_sst_regional.py` cover
+the weighting, missing-data, region-assignment, and non-gridded-exclusion logic
+without requiring those downloads. Regional outputs are never mixed into
+`sst_summary.csv`.
+
 A lightweight package for managing, downloading and processing climate data for use in calculating and presenting
 climate indicators, as well as creating dashboards based on these indicators.
 
