@@ -36,6 +36,28 @@ def _write_wide_merged_csv(path: Path) -> None:
     ).to_csv(path, index=False)
 
 
+def _annual_reference_frame(module):
+    rows = []
+    for year in range(1850, 2026):
+        for index, dataset in enumerate(module.DATASET_LEVELS):
+            if dataset == "CMEMS" and year < 1982:
+                continue
+            rows.append(
+                {
+                    "dataset": dataset,
+                    "year": year,
+                    "sst_anomaly": (year - 1991) * 0.01 + index * 0.02,
+                }
+            )
+    frame = pd.DataFrame(rows)
+    frame["dataset"] = pd.Categorical(
+        frame["dataset"],
+        categories=module.DATASET_LEVELS,
+        ordered=True,
+    )
+    return frame
+
+
 def test_prepare_sst_plot_data_reads_verified_wide_merged_output(monkeypatch, tmp_path):
     module = _load_plot_module(monkeypatch, tmp_path)
     _write_wide_merged_csv(module.INPUT_CSV)
@@ -84,3 +106,62 @@ def test_main_writes_reference_style_png_to_managed_sst_figures(monkeypatch, tmp
     assert module.OUTPUT_PNG.parent == (
         tmp_path / "ManagedData" / "SeaSurfaceTemperature" / "Figures"
     )
+
+
+def test_preindustrial_rebaseline_excludes_cmems_and_zeroes_historical_baseline(monkeypatch, tmp_path):
+    module = _load_plot_module(monkeypatch, tmp_path)
+    frame = _annual_reference_frame(module)
+
+    rebaselined = module.rebaseline_annual_frame(
+        frame,
+        baseline_start=1850,
+        baseline_end=1900,
+        datasets=module.HISTORICAL_DATASET_LEVELS,
+    )
+
+    assert "CMEMS" not in rebaselined["dataset"].astype(str).unique()
+    baseline = rebaselined[rebaselined["year"].between(1850, 1900)]
+    means = baseline.groupby("dataset", observed=False)["sst_anomaly"].mean()
+    for dataset in module.HISTORICAL_DATASET_LEVELS:
+        assert abs(means.loc[dataset]) < 1e-12
+
+
+def test_pairwise_metrics_and_trends_use_common_overlap_years(monkeypatch, tmp_path):
+    module = _load_plot_module(monkeypatch, tmp_path)
+    frame = _annual_reference_frame(module)
+
+    metrics = module.calculate_pairwise_metrics(frame)
+    cma_cmems = metrics[
+        (metrics["dataset_a"] == "CMA-SST") & (metrics["dataset_b"] == "CMEMS")
+    ].iloc[0]
+    assert cma_cmems["year_start"] == 1982
+    assert cma_cmems["year_end"] == 2025
+    assert cma_cmems["n_years"] == 44
+    assert cma_cmems["rmse_C"] > 0
+
+    trends = module.calculate_trend_estimates(frame)
+    cmems_long = trends[
+        (trends["dataset"] == "CMEMS") & (trends["period"] == "1850-2025")
+    ].iloc[0]
+    assert cmems_long["n_years"] == 44
+    assert abs(cmems_long["trend_C_per_decade"] - 0.1) < 1e-12
+
+
+def test_write_annual_diagnostic_suite_creates_expected_outputs(monkeypatch, tmp_path):
+    module = _load_plot_module(monkeypatch, tmp_path)
+    frame = _annual_reference_frame(module)
+
+    figure_paths, table_paths = module.write_annual_diagnostic_suite(frame)
+
+    assert len(figure_paths) == 8
+    assert len(table_paths) == 7
+    assert all(path.exists() for path in figure_paths)
+    assert all(path.exists() for path in table_paths)
+    assert (
+        tmp_path
+        / "ManagedData"
+        / "SeaSurfaceTemperature"
+        / "processed"
+        / "annual_diagnostics"
+        / "sst_annual_pairwise_metrics.csv"
+    ).exists()

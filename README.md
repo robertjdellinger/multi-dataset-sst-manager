@@ -61,16 +61,29 @@ and extract `CMDCapi.py` locally and set `CMA_USER_ID` in
 `climind/fetchers/.env` or in the shell. The real `.env` file is local-only; use
 `climind/fetchers/.env.example` as the template.
 
-CMA handling: the authenticated CMA API returns yearly ZIP files containing
-monthly 2-degree gridded NetCDF files such as
-`SURF_CLI_GLB_MST_MON_GRID_2DEG_185301.nc`, not the precomputed
-`CMA-SST_Global_Month_Temp_1981_2010.csv` reference source. CMA product 16 is the
-land-ocean *merged* CMA-GMST field, so the raw grid carries finite anomalies over
-land. `fetcher_cma_api` therefore restricts the aggregation to ocean cells —
-using the same Natural Earth land definition
-(`regionmask.defined_regions.natural_earth_v5_0_0.land_110`) that upstream
-`climind/data_types/grid.py` uses — and computes a cosine-latitude weighted global
-ocean mean only after schema, coverage, and QC checks pass.
+CMA handling is split by source type. If a verified standalone CMA-SST product
+or CMA-SST global time series is used, treat it as an oceanic SST anomaly product
+and do not apply an additional land-ocean mask. The current authenticated CMA API
+fallback returns yearly ZIP files containing monthly 2-degree gridded NetCDF
+files such as `SURF_CLI_GLB_MST_MON_GRID_2DEG_185301.nc`, not the precomputed
+`CMA-SST_Global_Month_Temp_1981_2010.csv` reference source. That active fallback
+uses CMA product 16, the land-ocean *merged* CMA-GMST field, so the raw grid
+carries finite anomalies over land. `fetcher_cma_api` therefore restricts the
+aggregation to ocean cells and computes a cosine-latitude weighted global ocean
+mean only after schema, coverage, and QC checks pass.
+
+For a deliberate CMA-GMST ocean-only fallback consolidation or sensitivity pass,
+the stricter spatial-reference dependency is the ORNL DAAC ISLSCP II land-ocean
+mask documented by Jet Propulsion Laboratory (2013),
+`https://doi.org/10.3334/ORNLDAAC/1200`, Earthdata concept
+`C2785331161-ORNL_CLOUD`. Use the 0.25-degree land-ocean percentage fields from
+`land_ocean_masks_xdeg.zip` to derive fractional ocean weights on the 2-degree
+CMA-GMST grid. Do not add ISLSCP II to
+`climind/metadata_files/temperature/sst/build_pipeline/`; it is an ancillary
+spatial-reference product, not an SST climate data collection. The optional
+helper `scripts/sea_surface_temperature/download_spatial_reference_data.sh`
+creates the target directory and prints the manual ORNL acquisition checklist
+without hard-coding direct granule URLs.
 
 Ocean masking removes the land contamination that otherwise inflated the CMA
 series (it cut the maximum difference versus the reference from ~0.38 to
@@ -81,7 +94,9 @@ reconciliation gap is expected, so CMA is validated against a wider, explicitly
 documented tolerance (`CMA_VALIDATION_TOLERANCE = 0.20` degC in
 `build_sst_outputs.py`) while every other dataset keeps the tight
 `DEFAULT_VALIDATION_TOLERANCE = 0.01` degC. With these tolerances, strict-mode
-validation passes for all six outputs.
+validation can pass for all six outputs once the CMA source cache or CMDC API SDK
+path is available; without a verified CMA source, strict mode fails before
+replacing final output tables.
 
 The upstream CMA grid path was inspected directly: the upstream helper
 `scripts/global_temperature/calc_global_mean_from_grid.py` computes a plain
@@ -98,6 +113,15 @@ separate from, and use distinct collection names from, the WMO dashboard's own
 SST collections in `climind/metadata_files/temperature/sst/` so the dashboard's
 recursive metadata scan never collides with the pipeline definitions.
 
+Optional gridded SST candidate metadata live separately in
+`climind/metadata_files/temperature/sst/gridded_pipeline/`. This family is not
+selected by `scripts/data_management/build_sst_outputs.py --strict` and must not
+be used to produce the six required global CSV outputs. The first candidates are
+`ERSST-v6-gridded` from the NOAA PSL ERSSTv6 monthly gridded `sst.mnmean.nc`
+NetCDF and `HadSST4-gridded` from the Met Office HadSST4 monthly gridded median
+NetCDF. CMEMS OMI area-averaged SST remains a time-series product and is not
+reclassified as gridded.
+
 DCENT-I source
 --------------
 
@@ -111,10 +135,10 @@ If a share link changes, update the URL in those two locations.
 Branch scope
 ------------
 
-This is the **regional extensions** branch (`claude/sst-regional-extensions`),
-built on top of the validated core branch (`fix/remove-sensitive-sst-links`). It
-adds optional, separately-tracked work and never changes the six required global
-SST outputs or strict global validation.
+Optional regional and gridded extensions are separately tracked from the strict
+global reference workflow. They must not change the six required global SST
+outputs, the strict global validation tolerances, or the active metadata list in
+`scripts/data_management/build_sst_outputs.py`.
 
 Reference-style figure (standalone)
 -----------------------------------
@@ -138,21 +162,42 @@ instead of WMO regions, and never edits the upstream WMO scripts. Scripts under
 - `sst_regional_core.py` - reusable, tested logic (cosine-latitude weighting,
   area-weighted means with coverage diagnostics, monthly->annual aggregation,
   eligibility classification, MEOW/PPOW masking, spatial-file validation).
+- `download_sst_gridded_inputs.py` - downloads or stages only metadata from
+  `climind/metadata_files/temperature/sst/gridded_pipeline/`, writes raw source
+  files under `$DATADIR/ManagedData/SeaSurfaceTemperature/Data/gridded/`, and
+  writes the inventory/provenance logs
+  `$DATADIR/ManagedData/SeaSurfaceTemperature/logs/qa/sst_gridded_source_inventory.csv`
+  and
+  `$DATADIR/ManagedData/SeaSurfaceTemperature/logs/qa/sst_gridded_download_log.csv`.
 - `prepare_sst_gridded_inputs.py`, `make_meow_ppow_region_masks.py`,
   `calculate_sst_meow_ppow_averages.py` - thin CLI drivers; the latter writes the
   eligibility report `outputs/logs/qa/sst_gridded_regional_eligibility.csv`.
-- `scripts/data_management/download_spatial_reference_data.sh` - fetch Natural
-  Earth and point to the MEOW/PPOW download.
+- `scripts/sea_surface_temperature/download_spatial_reference_data.sh` - fetch
+  Natural Earth, create SST spatial-reference directories, point to the
+  MEOW/PPOW download, and print manual ORNL DAAC / ISLSCP II ancillary mask
+  instructions.
 
 Only **true latitude-longitude gridded SST** datasets are eligible; global-mean
-and area-averaged time series (`space_resolution=999`) are rejected. With the
-current pipeline (all five datasets are time series; CMEMS is an area-averaged
-NetCDF indicator) the eligibility report lists every dataset as excluded - by
-design. Real regional outputs require a gridded SST collection and the MEOW/PPOW
-shapefiles under `$DATADIR/Shape_Files/UNEP_WCMC_MEOW_PPOW/` (https://wcmc.io/WCMC_036;
-local-only, not committed). Synthetic tests in `tests/test_sst_regional.py` cover
-the weighting, missing-data, region-assignment, and non-gridded-exclusion logic
-without those downloads. Regional outputs are never mixed into `sst_summary.csv`.
+and area-averaged time series (`space_resolution=999`) are rejected. The
+eligibility report includes the strict global time-series products and the
+separate gridded candidates. Gridded candidates remain excluded until
+`download_sst_gridded_inputs.py` has inspected the source file and recorded valid
+time, latitude, and longitude dimensions in the DATADIR-managed inventory. Real
+regional outputs require eligible gridded SST files and the MEOW/PPOW shapefiles
+under `$DATADIR/Shape_Files/UNEP_WCMC_MEOW_PPOW/` (https://wcmc.io/WCMC_036;
+local-only, not committed). Synthetic tests in `tests/test_sst_regional.py` and
+`tests/test_sst_gridded_download_metadata.py` cover the weighting, missing-data,
+region-assignment, gridded-inventory, and non-gridded-exclusion logic without
+those downloads. Regional outputs are never mixed into `sst_summary.csv`.
+
+Run the gridded acquisition and eligibility checks separately from the strict
+global workflow:
+
+`DATADIR="$HOME/data/multi-dataset-sst-manager" python scripts/sea_surface_temperature/download_sst_gridded_inputs.py --datasets ERSST-v6-gridded HadSST4-gridded --strict`
+
+`DATADIR="$HOME/data/multi-dataset-sst-manager" python scripts/sea_surface_temperature/prepare_sst_gridded_inputs.py --eligibility-only`
+
+`DATADIR="$HOME/data/multi-dataset-sst-manager" python scripts/sea_surface_temperature/calculate_sst_meow_ppow_averages.py`
 
 BHM paleo reconstruction (deferred)
 -----------------------------------

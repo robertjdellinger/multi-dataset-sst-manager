@@ -16,6 +16,7 @@
 from __future__ import annotations
 
 import csv
+import os
 import sys
 from pathlib import Path
 
@@ -28,12 +29,42 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 PIPELINE_DIR = (
     PROJECT_ROOT / "climind" / "metadata_files" / "temperature" / "sst" / "build_pipeline"
 )
+GRIDDED_PIPELINE_DIR = (
+    PROJECT_ROOT / "climind" / "metadata_files" / "temperature" / "sst" / "gridded_pipeline"
+)
 QA_DIR = PROJECT_ROOT / "outputs" / "logs" / "qa"
 ELIGIBILITY_CSV = QA_DIR / "sst_gridded_regional_eligibility.csv"
 
 
 def candidate_metadata_files() -> list[Path]:
-    return sorted(PIPELINE_DIR.glob("*.json"))
+    return sorted(PIPELINE_DIR.glob("*.json")) + sorted(GRIDDED_PIPELINE_DIR.glob("*.json"))
+
+
+def managed_gridded_inventory_path() -> Path:
+    data_dir = os.environ.get("DATADIR")
+    if not data_dir:
+        return Path("")
+    return (
+        Path(data_dir)
+        / "ManagedData"
+        / "SeaSurfaceTemperature"
+        / "logs"
+        / "qa"
+        / "sst_gridded_source_inventory.csv"
+    )
+
+
+def load_gridded_inventory() -> dict[str, dict]:
+    inventory = managed_gridded_inventory_path()
+    if not inventory.exists():
+        return {}
+    with inventory.open(newline="") as handle:
+        rows = list(csv.DictReader(handle))
+    return {row["dataset"]: row for row in rows}
+
+
+def _csv_bool(value) -> bool:
+    return str(value).lower() == "true"
 
 
 def _meta_get(meta, key, default=None):
@@ -46,6 +77,7 @@ def _meta_get(meta, key, default=None):
 
 def build_eligibility_rows() -> list[dict]:
     rows: list[dict] = []
+    inventory = load_gridded_inventory()
     for metadata_file in candidate_metadata_files():
         collection = DataCollection.from_file(metadata_file)
         for dataset in collection.datasets:
@@ -61,15 +93,20 @@ def build_eligibility_rows() -> list[dict]:
             source_filename = filenames[0] if filenames else ""
 
             has_lat = has_lon = has_time = False
-            if verdict["eligible"] and str(source_filename).lower().endswith(".nc"):
-                # Spatial dims are only inspected for genuinely gridded NetCDFs.
-                try:
-                    dims = core.inspect_netcdf_spatial(Path(source_filename))
-                    has_lat, has_lon, has_time = (
-                        dims["has_lat"], dims["has_lon"], dims["has_time"],
+            if verdict["eligible"]:
+                inventory_row = inventory.get(meta_dict["name"])
+                if inventory_row:
+                    has_lat = bool(inventory_row.get("lat_name"))
+                    has_lon = bool(inventory_row.get("lon_name"))
+                    has_time = bool(inventory_row.get("time_name"))
+                    verdict["eligible"] = _csv_bool(
+                        inventory_row.get("eligible_for_regional_processing")
                     )
-                except Exception:  # file not present locally; leave as False
-                    pass
+                    verdict["exclusion_reason"] = "" if verdict["eligible"] else inventory_row.get("reason", "")
+                    source_filename = inventory_row.get("source_file", source_filename)
+                else:
+                    verdict["eligible"] = False
+                    verdict["exclusion_reason"] = "gridded source has not been downloaded and inspected"
 
             rows.append(
                 {
@@ -96,7 +133,7 @@ def write_eligibility_report() -> Path:
         "has_lat", "has_lon", "has_time", "eligible", "exclusion_reason",
     ]
     with open(ELIGIBILITY_CSV, "w", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fields)
+        writer = csv.DictWriter(handle, fieldnames=fields, lineterminator="\n")
         writer.writeheader()
         writer.writerows(rows)
     return ELIGIBILITY_CSV

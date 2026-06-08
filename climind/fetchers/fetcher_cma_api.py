@@ -24,10 +24,14 @@
 from __future__ import annotations
 
 import functools
+import csv
+import importlib
+import importlib.util
 import os
 import re
 import shutil
 import sys
+import time
 import zipfile
 from datetime import datetime
 from pathlib import Path
@@ -50,23 +54,92 @@ MONTH_COLUMNS = ["jan", "feb", "mar", "apr", "may", "jun",
 VARIABLE_NAME_HINTS = ("anomaly", "sst", "temp", "temperature")
 
 
+class CMASourceError(RuntimeError):
+    """CMA source acquisition error with a machine-readable status."""
+
+    def __init__(self, status: str, message: str):
+        super().__init__(message)
+        self.status = status
+
+
+def _import_cmdcapi_from_file(path: Path):
+    """Import CMDCapi.py from an explicit SDK file path."""
+    path = Path(path).expanduser().resolve()
+    if not path.is_file():
+        raise ImportError(f"CMDCAPI_PATH does not point to a file: {path}")
+    if path.name != "CMDCapi.py":
+        raise ImportError(f"CMDCAPI_PATH must point to CMDCapi.py, got {path.name}.")
+
+    spec = importlib.util.spec_from_file_location("CMDCapi", path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Could not create an import spec for {path}.")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules["CMDCapi"] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def resolve_cmdcapi_module():
+    """
+    Resolve the CMA CMDCapi module without committing the SDK.
+
+    Search order:
+    1. Existing Python import path.
+    2. CMDCAPI_PATH, if set to a CMDCapi.py file.
+    3. CMA_SDK_DIR, if set to a directory containing CMDCapi.py.
+    """
+    try:
+        return importlib.import_module("CMDCapi")
+    except ImportError as path_exc:
+        import_errors = [path_exc]
+
+    cmdcapi_path = os.getenv("CMDCAPI_PATH")
+    if cmdcapi_path:
+        try:
+            return _import_cmdcapi_from_file(Path(cmdcapi_path))
+        except ImportError as exc:
+            import_errors.append(exc)
+
+    sdk_dir = os.getenv("CMA_SDK_DIR")
+    if sdk_dir:
+        try:
+            return _import_cmdcapi_from_file(Path(sdk_dir) / "CMDCapi.py")
+        except ImportError as exc:
+            import_errors.append(exc)
+
+    local_sdk_file = Path(__file__).parent / "local_sdk" / "CMDCapi.py"
+    if local_sdk_file.exists():
+        try:
+            return _import_cmdcapi_from_file(local_sdk_file)
+        except ImportError as exc:
+            import_errors.append(exc)
+
+    detail = "; ".join(str(exc) for exc in import_errors if str(exc))
+    raise ImportError(
+        "CMA-SST source files are missing and CMDCapi.py is not importable. "
+        "Install or expose the CMA CMDC API SDK using "
+        "CMDCAPI_PATH=/path/to/CMDCapi.py or CMA_SDK_DIR=/path/to/sdk_directory."
+        + (f" Import diagnostics: {detail}" if detail else "")
+    )
+
+
 def _load_cma_client():
     """Import the CMA CMDC SDK client only when the fetcher is used."""
-    local_sdk_dir = Path(__file__).parent / "local_sdk"
-    if local_sdk_dir.exists() and str(local_sdk_dir) not in sys.path:
-        sys.path.insert(0, str(local_sdk_dir))
-
+    module = resolve_cmdcapi_module()
     try:
-        from CMDCapi import CMDCClient
-    except ImportError as exc:
-        raise ImportError(
-            "Could not import CMDCapi.CMDCClient. Download CMDCapi.zip from "
-            f"{CMDCAPI_ZIP_URL}, extract CMDCapi.py, and place it somewhere "
-            "on PYTHONPATH, in the working directory, or in another local path "
-            "where Python can import it."
-        ) from exc
+        return module.CMDCClient
+    except AttributeError as exc:
+        raise ImportError("CMDCapi.py does not expose CMDCClient.") from exc
 
-    return CMDCClient
+
+def resolve_cma_credentials() -> dict[str, str]:
+    """Resolve CMA credentials from the fetcher .env file or process env."""
+    load_dotenv(Path(__file__).parent / ".env")
+    load_dotenv()
+    user_id = os.getenv("CMA_USER_ID")
+    if not user_id:
+        return {}
+    return {"CMA_USER_ID": user_id}
 
 
 def _year_range(start_year: int = 1850, end_year: int | None = 2025) -> Iterable[int]:
@@ -108,6 +181,247 @@ def _find_cma_netcdf_files(download_dir: Path) -> list[Path]:
         path for path in download_dir.rglob("*.nc")
         if path.is_file() and not path.name.startswith(".")
     )
+
+
+def _is_likely_cma_file(path: Path) -> bool:
+    """Return True for filenames used by CMA/CMDC SST source artifacts."""
+    name = path.name.lower()
+    return any(
+        token in name
+        for token in ("cma", "cmst", "gmst", "mst", "surf_cli_glb", "china")
+    )
+
+
+def discover_local_cma_sources(search_roots: list[Path]) -> dict[str, list[Path]]:
+    """Classify local CMA source/cache candidates under the supplied roots."""
+    discovered: dict[str, list[Path]] = {
+        "monthly_source_csv": [],
+        "annual_csv": [],
+        "netcdf": [],
+    }
+
+    for root in search_roots:
+        root = Path(root).expanduser()
+        if not root.exists():
+            continue
+        files = [root] if root.is_file() else root.rglob("*")
+        for path in files:
+            path = Path(path)
+            if not path.is_file() or path.name.startswith("."):
+                continue
+            suffix = path.suffix.lower()
+            if suffix == ".nc" and _is_likely_cma_file(path):
+                discovered["netcdf"].append(path)
+                continue
+            if suffix != ".csv":
+                continue
+            if path.name == "CMA-SST_Global_Month_Temp_1981_2010.csv":
+                validation = validate_cma_monthly_source_csv(path)
+                if validation["valid"]:
+                    discovered["monthly_source_csv"].append(path)
+                continue
+            validation = validate_cma_annual_csv(path)
+            if validation["valid"]:
+                discovered["annual_csv"].append(path)
+
+    return {key: sorted(paths) for key, paths in discovered.items()}
+
+
+def validate_cma_monthly_source_csv(path: Path) -> dict[str, object]:
+    """Validate the monthly CMA source CSV expected by reader_cma_gmst."""
+    path = Path(path)
+    if not path.is_file():
+        return {"valid": False, "reason": f"missing file: {path}"}
+
+    try:
+        frame = pd.read_csv(path)
+    except Exception as exc:
+        return {"valid": False, "reason": f"could not read monthly CMA CSV: {exc}"}
+
+    if "year" not in frame.columns:
+        return {"valid": False, "reason": "monthly CMA CSV is missing the year column"}
+    missing_months = [column for column in MONTH_COLUMNS if column not in frame.columns]
+    if missing_months:
+        return {
+            "valid": False,
+            "reason": f"monthly CMA CSV is missing columns: {', '.join(missing_months)}",
+        }
+    if frame.empty:
+        return {"valid": False, "reason": "monthly CMA CSV has no rows"}
+
+    years = pd.to_numeric(frame["year"], errors="coerce").dropna().astype(int)
+    if years.empty:
+        return {"valid": False, "reason": "monthly CMA CSV has no numeric years"}
+
+    return {
+        "valid": True,
+        "source_kind": "monthly_source_csv",
+        "time_resolution": "monthly",
+        "gridded_eligible": False,
+        "year_start": int(years.min()),
+        "year_end": int(years.max()),
+        "rows": int(len(frame)),
+        "source_value_type": "anomaly",
+        "path": str(path),
+    }
+
+
+def validate_cma_annual_csv(path: Path) -> dict[str, object]:
+    """Validate a derived annual/global CMA BADC-CSV without making it gridded."""
+    path = Path(path)
+    if not path.is_file():
+        return {"valid": False, "reason": f"missing file: {path}", "gridded_eligible": False}
+
+    try:
+        rows = list(csv.reader(path.read_text(encoding="utf-8-sig").splitlines()))
+        data_start = next(i for i, row in enumerate(rows) if row and row[0] == "data")
+        data_end = next(i for i, row in enumerate(rows) if row and row[0] == "end data")
+    except Exception as exc:
+        return {
+            "valid": False,
+            "reason": f"not a valid CMA annual BADC CSV: {exc}",
+            "gridded_eligible": False,
+        }
+
+    header = rows[data_start + 1]
+    if "year" not in header or "data" not in header:
+        return {
+            "valid": False,
+            "reason": "CMA annual BADC CSV must contain year and data columns",
+            "gridded_eligible": False,
+        }
+
+    frame = pd.DataFrame(rows[data_start + 2:data_end], columns=header)
+    years = pd.to_numeric(frame["year"], errors="coerce").dropna().astype(int)
+    if years.empty:
+        return {
+            "valid": False,
+            "reason": "CMA annual BADC CSV contains no numeric years",
+            "gridded_eligible": False,
+        }
+
+    return {
+        "valid": True,
+        "source_kind": "annual_badc_csv",
+        "time_resolution": "annual",
+        "gridded_eligible": False,
+        "year_start": int(years.min()),
+        "year_end": int(years.max()),
+        "rows": int(len(frame)),
+        "source_value_type": "anomaly",
+        "path": str(path),
+    }
+
+
+def _infer_source_value_type(variable_name: str, attrs: dict, paths: list[Path]) -> str:
+    """Infer actual/anomaly state only from explicit schema or CMA product cues."""
+    text_parts = [variable_name]
+    text_parts.extend(str(value) for value in attrs.values())
+    text_parts.extend(path.name for path in paths)
+    text = " ".join(text_parts).lower()
+    if "anomaly" in text or "anom" in text or "product 16" in text or "mst" in text:
+        return "anomaly"
+    if "absolute" in text or "actual" in text:
+        return "actual"
+    return "unknown"
+
+
+def validate_cma_gridded_netcdf_files(paths: list[Path]) -> dict[str, object]:
+    """Validate local CMA NetCDF files as true gridded latitude-longitude sources."""
+    paths = sorted(Path(path) for path in paths)
+    if not paths:
+        return {
+            "valid": False,
+            "gridded_eligible": False,
+            "reason": "no CMA NetCDF files supplied",
+        }
+
+    records = []
+    variable_names: set[str] = set()
+    lat_names: set[str] = set()
+    lon_names: set[str] = set()
+    units: set[str] = set()
+    attrs_for_state: dict[str, object] = {}
+    try:
+        for path in paths:
+            with xr.open_dataset(path, decode_times=True) as dataset:
+                variable_name = _identify_cma_data_variable(dataset)
+                variable = dataset[variable_name]
+                lat_name, lon_name = _infer_lat_lon_names(dataset, variable)
+                if dataset[lat_name].size <= 1 or dataset[lon_name].size <= 1:
+                    raise RuntimeError(
+                        "CMA NetCDF latitude and longitude coordinates must each contain "
+                        "more than one cell for gridded eligibility."
+                    )
+                monthly_grid = _select_monthly_grid(variable, lat_name, lon_name)
+                year, month = _infer_year_month(path, dataset)
+                variable_names.add(variable_name)
+                lat_names.add(lat_name)
+                lon_names.add(lon_name)
+                if "units" in variable.attrs:
+                    units.add(str(variable.attrs["units"]))
+                attrs_for_state.update(variable.attrs)
+                records.append(
+                    {
+                        "path": path,
+                        "year": year,
+                        "month": month,
+                        "shape": tuple(int(size) for size in monthly_grid.shape),
+                    }
+                )
+    except Exception as exc:
+        return {
+            "valid": False,
+            "gridded_eligible": False,
+            "reason": f"missing latitude and longitude gridded CMA schema: {exc}",
+        }
+
+    if len(variable_names) != 1:
+        return {
+            "valid": False,
+            "gridded_eligible": False,
+            "reason": f"inconsistent CMA NetCDF variables: {sorted(variable_names)}",
+        }
+    if len(lat_names) != 1 or len(lon_names) != 1:
+        return {
+            "valid": False,
+            "gridded_eligible": False,
+            "reason": "inconsistent CMA NetCDF latitude and longitude coordinate names",
+        }
+
+    data = pd.DataFrame(records)
+    duplicates = data[data.duplicated(["year", "month"], keep=False)]
+    if not duplicates.empty:
+        return {
+            "valid": False,
+            "gridded_eligible": False,
+            "reason": "duplicate CMA NetCDF year-month files found",
+        }
+
+    variable_name = next(iter(variable_names))
+    source_value_type = _infer_source_value_type(variable_name, attrs_for_state, paths)
+    if source_value_type == "unknown":
+        return {
+            "valid": False,
+            "gridded_eligible": False,
+            "reason": "CMA NetCDF source value type is not documented as actual or anomaly",
+        }
+
+    return {
+        "valid": True,
+        "gridded_eligible": True,
+        "source_kind": "monthly_gridded_netcdf",
+        "time_resolution": "monthly",
+        "source_value_type": source_value_type,
+        "variable_name": variable_name,
+        "lat_name": next(iter(lat_names)),
+        "lon_name": next(iter(lon_names)),
+        "months": int(len(data)),
+        "year_start": int(data["year"].min()),
+        "year_end": int(data["year"].max()),
+        "units": ";".join(sorted(units)) if units else "unspecified",
+        "files": [str(path) for path in paths],
+    }
 
 
 def _parse_year_month_from_filename(path: Path) -> tuple[int, int]:
@@ -259,9 +573,13 @@ def _cosine_latitude_weighted_mean(values: np.ndarray, latitudes: np.ndarray) ->
 # CMA product 16 (CMA-GMST) is a land-ocean MERGED surface-temperature anomaly
 # field, so the raw 2-degree grid carries finite anomalies over land. Averaging
 # that field directly would yield a land-contaminated (amplitude-inflated) series,
-# not a sea-surface-temperature series. To produce an SST series we restrict the
-# average to ocean cells, using the same Natural Earth land definition that
-# upstream climind.data_types.grid uses for its own land masking.
+# not a sea-surface-temperature series. This ocean filtering is only for the
+# CMA-GMST fallback path; a verified standalone CMA-SST product is already oceanic
+# and should not be masked again. The validated strict core currently uses the
+# same Natural Earth land definition that upstream climind.data_types.grid uses
+# for its own land masking. A deliberate CMA-GMST separation sensitivity pass can
+# replace this with an externally managed fractional land-ocean mask, such as the
+# ORNL DAAC ISLSCP II ancillary mask, after those files are acquired and audited.
 OCEAN_MASK_SOURCE = "regionmask.defined_regions.natural_earth_v5_0_0.land_110"
 
 
@@ -471,41 +789,90 @@ def _copy_or_report_outputs(
     )
 
 
-def fetch(url: str, outdir: Path, filename: str) -> None:
+def ensure_cma_source_files(
+    outdir: Path,
+    filename: str,
+    strict: bool = True,
+    start_year: int = 1850,
+    end_year: int = 2025,
+) -> dict[str, object]:
     """
-    Fetch CMA-SST / CMA-GMST data using the CMA CMDC API.
+    Ensure the Climind-managed CMA source CSV exists.
 
-    The metadata URL is retained for source traceability. The actual download is
-    performed through CMDCClient.retrieve using productId 16 and source 1.
+    Resolution order:
+    1. Reuse a validated managed monthly source CSV or complete local NetCDF cache.
+    2. Import the CMDC API SDK.
+    3. Use configured CMA credentials to download through CMDC API.
+    4. Validate and aggregate the downloaded source files.
     """
     load_dotenv(Path(__file__).parent / ".env")
     load_dotenv()
 
-    cma_user_id = os.getenv("CMA_USER_ID")
-
-    if not cma_user_id:
-        raise RuntimeError(
-            "CMA_USER_ID is not set. Add CMA_USER_ID to climind/fetchers/.env "
-            "or export it in your shell before running the CMA fetcher."
-        )
-
     outdir = Path(outdir)
     outdir.mkdir(parents=True, exist_ok=True)
-
     out_path = outdir / filename
     raw_download_dir = outdir / "cma_api_raw"
     raw_download_dir.mkdir(parents=True, exist_ok=True)
 
     if out_path.exists():
-        print(f"CMA-SST data written to {out_path}")
-        return
+        validation = validate_cma_monthly_source_csv(out_path)
+        if validation["valid"]:
+            return {
+                "status": "source_cached",
+                "paths": [out_path],
+                "validation": validation,
+            }
+        if strict:
+            raise CMASourceError(
+                "source_validation_failed",
+                f"Existing CMA source file failed validation: {validation['reason']}",
+            )
 
-    CMDCClient = _load_cma_client()
+    cached_netcdf = _find_cma_netcdf_files(raw_download_dir)
+    if cached_netcdf:
+        validation = validate_cma_gridded_netcdf_files(cached_netcdf)
+        if not validation["valid"]:
+            if strict:
+                raise CMASourceError(
+                    "source_validation_failed",
+                    f"Cached CMA NetCDF files failed validation: {validation['reason']}",
+                )
+        else:
+            _safe_unzip_archives(raw_download_dir)
+            missing_years = _missing_cma_years(raw_download_dir, start_year, end_year)
+            if not missing_years:
+                _copy_or_report_outputs(raw_download_dir, out_path, start_year, end_year)
+                return {
+                    "status": "source_cached",
+                    "paths": cached_netcdf,
+                    "validation": validation,
+                }
 
-    client = CMDCClient(user_id=cma_user_id, output_dir=str(raw_download_dir))
-    start_year = 1850
-    end_year = 2025
+    try:
+        CMDCClient = _load_cma_client()
+    except Exception as exc:
+        message = (
+            "CMA-SST source files are missing and CMDCapi.py is not importable. "
+            "Install or expose the CMA CMDC API SDK using "
+            "CMDCAPI_PATH=/path/to/CMDCapi.py or CMA_SDK_DIR=/path/to/sdk_directory. "
+            "Existing processed outputs were preserved."
+        )
+        if strict:
+            raise CMASourceError("source_missing_sdk", message) from exc
+        return {"status": "source_missing_sdk", "paths": [], "reason": message}
 
+    credentials = resolve_cma_credentials()
+    if not credentials:
+        message = (
+            "CMA-SST source files are missing and CMA credentials are not configured. "
+            "Set CMA_USER_ID in climind/fetchers/.env or the process environment. "
+            "Existing processed outputs were preserved."
+        )
+        if strict:
+            raise CMASourceError("source_missing_credentials", message)
+        return {"status": "source_missing_credentials", "paths": [], "reason": message}
+
+    client = CMDCClient(user_id=credentials["CMA_USER_ID"], output_dir=str(raw_download_dir))
     _safe_unzip_archives(raw_download_dir)
     years_to_request = _missing_cma_years(raw_download_dir, start_year, end_year)
 
@@ -519,10 +886,58 @@ def fetch(url: str, outdir: Path, filename: str) -> None:
             "source": "1",
         }
 
-        print(f"Requesting CMA-SST / CMA-GMST data for {year}")
-        client.retrieve(params)
+        max_attempts = 5
+        for attempt in range(1, max_attempts + 1):
+            try:
+                print(
+                    f"Requesting CMA-SST / CMA-GMST data for {year} "
+                    f"(attempt {attempt}/{max_attempts})"
+                )
+                client.retrieve(params)
+                break
+            except Exception as exc:
+                if attempt == max_attempts:
+                    raise
+                print(
+                    f"CMA request for {year} failed on attempt "
+                    f"{attempt}/{max_attempts}: {exc}. Retrying."
+                )
+                time.sleep(5 * attempt)
 
     _safe_unzip_archives(raw_download_dir)
-    _copy_or_report_outputs(raw_download_dir, out_path, start_year, end_year)
+    try:
+        _copy_or_report_outputs(raw_download_dir, out_path, start_year, end_year)
+    except Exception as exc:
+        if strict:
+            raise CMASourceError(
+                "source_validation_failed",
+                f"CMA API download completed but source validation or aggregation failed: {exc}",
+            ) from exc
+        return {"status": "source_validation_failed", "paths": [], "reason": str(exc)}
 
-    print(f"CMA-SST data written to {out_path}")
+    validation = validate_cma_monthly_source_csv(out_path)
+    if not validation["valid"]:
+        if strict:
+            raise CMASourceError(
+                "source_validation_failed",
+                f"CMA managed source CSV failed validation after download: {validation['reason']}",
+            )
+        return {"status": "source_validation_failed", "paths": [out_path], "validation": validation}
+
+    return {
+        "status": "source_downloaded",
+        "paths": [out_path],
+        "validation": validation,
+    }
+
+
+def fetch(url: str, outdir: Path, filename: str) -> None:
+    """
+    Fetch CMA-SST / CMA-GMST data using the CMA CMDC API.
+
+    The metadata URL is retained for source traceability. The actual download is
+    performed through CMDCClient.retrieve using productId 16 and source 1.
+    """
+    result = ensure_cma_source_files(Path(outdir), filename, strict=True)
+    out_path = Path(outdir) / filename
+    print(f"CMA-SST data written to {out_path} ({result['status']})")

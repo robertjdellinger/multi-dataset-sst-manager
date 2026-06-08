@@ -1,4 +1,5 @@
 from pathlib import Path
+import sys
 
 import numpy as np
 import pandas as pd
@@ -6,8 +7,14 @@ import pytest
 import xarray as xr
 
 from climind.fetchers.fetcher_cma_api import (
+    CMASourceError,
     _copy_or_report_outputs,
     _ocean_cell_mask,
+    discover_local_cma_sources,
+    ensure_cma_source_files,
+    resolve_cmdcapi_module,
+    validate_cma_annual_csv,
+    validate_cma_gridded_netcdf_files,
     write_aggregated_cma_netcdf_csv,
 )
 
@@ -18,6 +25,32 @@ def _write_cma_grid(path: Path, values: np.ndarray) -> None:
         coords={"lat": np.array([0.0, 24.0, 60.0]), "lon": np.array([-150.0, 12.0])},
     )
     ds.to_netcdf(path)
+
+
+def _write_cma_badc_annual(path: Path) -> None:
+    path.write_text(
+        "\n".join(
+            [
+                "Conventions,G,BADC-CSV,1",
+                "history,G,Rebaselined to 1991-2020",
+                "data",
+                "time,year,data",
+                "18262,1850,-0.6404",
+                "18627,1851,-0.5922",
+                "end data",
+            ]
+        )
+    )
+
+
+def _write_cma_monthly_source(path: Path) -> None:
+    data = {"year": [1850]}
+    data.update({month: [float(index)] for index, month in enumerate(
+        ["jan", "feb", "mar", "apr", "may", "jun",
+         "jul", "aug", "sep", "oct", "nov", "dec"],
+        start=1,
+    )})
+    pd.DataFrame(data).to_csv(path, index=False)
 
 
 def _write_cma_grid_with_scalar_month(path: Path, values: np.ndarray, month: int) -> None:
@@ -161,3 +194,191 @@ def test_write_aggregated_cma_netcdf_csv_parses_year_from_filename_when_only_mon
     assert output["year"].tolist() == [2025]
     assert output.loc[0, "jan"] == pytest.approx(1.0)
     assert output.loc[0, "dec"] == pytest.approx(12.0)
+
+
+def test_discover_local_cma_sources_classifies_annual_csv_and_netcdf(tmp_path):
+    annual = tmp_path / "sst_CMA_SST.csv"
+    _write_cma_badc_annual(annual)
+    grid = tmp_path / "SURF_CLI_GLB_MST_MON_GRID_2DEG_185001.nc"
+    _write_cma_grid(grid, np.ones((3, 2)))
+
+    discovered = discover_local_cma_sources([tmp_path])
+
+    assert annual in discovered["annual_csv"]
+    assert grid in discovered["netcdf"]
+    assert discovered["monthly_source_csv"] == []
+
+
+def test_validate_cma_annual_csv_is_not_gridded_eligible(tmp_path):
+    annual = tmp_path / "sst_CMA_SST.csv"
+    _write_cma_badc_annual(annual)
+
+    result = validate_cma_annual_csv(annual)
+
+    assert result["valid"] is True
+    assert result["source_kind"] == "annual_badc_csv"
+    assert result["time_resolution"] == "annual"
+    assert result["gridded_eligible"] is False
+    assert result["year_start"] == 1850
+    assert result["year_end"] == 1851
+
+
+def test_validate_cma_gridded_netcdf_files_reports_schema_and_source_state(tmp_path):
+    for month in range(1, 13):
+        _write_cma_grid(tmp_path / f"SURF_CLI_GLB_MST_MON_GRID_2DEG_1850{month:02d}.nc", np.ones((3, 2)))
+
+    result = validate_cma_gridded_netcdf_files(sorted(tmp_path.glob("*.nc")))
+
+    assert result["valid"] is True
+    assert result["gridded_eligible"] is True
+    assert result["source_kind"] == "monthly_gridded_netcdf"
+    assert result["time_resolution"] == "monthly"
+    assert result["source_value_type"] == "anomaly"
+    assert result["variable_name"] == "anomaly"
+    assert result["lat_name"] == "lat"
+    assert result["lon_name"] == "lon"
+    assert result["months"] == 12
+
+
+def test_validate_cma_gridded_netcdf_files_rejects_global_mean_file(tmp_path):
+    path = tmp_path / "CMA_global_mean.nc"
+    ds = xr.Dataset({"anomaly": (("time",), np.ones(12))}, coords={"time": pd.date_range("1850-01-01", periods=12, freq="MS")})
+    ds.to_netcdf(path)
+
+    result = validate_cma_gridded_netcdf_files([path])
+
+    assert result["valid"] is False
+    assert result["gridded_eligible"] is False
+    assert "latitude and longitude" in result["reason"]
+
+
+def test_resolve_cmdcapi_module_uses_explicit_file_path(monkeypatch, tmp_path):
+    sdk = tmp_path / "CMDCapi.py"
+    sdk.write_text(
+        "class CMDCClient:\n"
+        "    def __init__(self, user_id, output_dir):\n"
+        "        self.user_id = user_id\n"
+        "        self.output_dir = output_dir\n"
+        "    def retrieve(self, params):\n"
+        "        return None\n"
+    )
+    sys.modules.pop("CMDCapi", None)
+    monkeypatch.setenv("CMDCAPI_PATH", str(sdk))
+    monkeypatch.delenv("CMA_SDK_DIR", raising=False)
+
+    module = resolve_cmdcapi_module()
+
+    assert hasattr(module, "CMDCClient")
+    sys.modules.pop("CMDCapi", None)
+
+
+def test_ensure_cma_source_files_reuses_valid_monthly_cache_without_api(monkeypatch, tmp_path):
+    filename = "CMA-SST_Global_Month_Temp_1981_2010.csv"
+    _write_cma_monthly_source(tmp_path / filename)
+
+    def fail_api():
+        raise AssertionError("CMDC API should not be called when source cache is valid")
+
+    monkeypatch.setattr("climind.fetchers.fetcher_cma_api._load_cma_client", fail_api)
+
+    result = ensure_cma_source_files(tmp_path, filename, strict=True, start_year=1850, end_year=1850)
+
+    assert result["status"] == "source_cached"
+    assert result["paths"] == [tmp_path / filename]
+
+
+def test_ensure_cma_source_files_missing_cache_and_sdk_reports_source_missing_sdk(monkeypatch, tmp_path):
+    filename = "CMA-SST_Global_Month_Temp_1981_2010.csv"
+
+    def missing_api():
+        raise ImportError("missing test SDK")
+
+    monkeypatch.setattr("climind.fetchers.fetcher_cma_api._load_cma_client", missing_api)
+
+    with pytest.raises(CMASourceError) as excinfo:
+        ensure_cma_source_files(tmp_path, filename, strict=True, start_year=1850, end_year=1850)
+
+    assert excinfo.value.status == "source_missing_sdk"
+    assert "CMDCapi.py is not importable" in str(excinfo.value)
+    assert "Existing processed outputs were preserved" in str(excinfo.value)
+
+
+def test_ensure_cma_source_files_missing_credentials_reports_source_missing_credentials(monkeypatch, tmp_path):
+    filename = "CMA-SST_Global_Month_Temp_1981_2010.csv"
+
+    class DummyClient:
+        def __init__(self, user_id, output_dir):
+            self.user_id = user_id
+            self.output_dir = output_dir
+
+    monkeypatch.setattr("climind.fetchers.fetcher_cma_api._load_cma_client", lambda: DummyClient)
+    monkeypatch.setattr("climind.fetchers.fetcher_cma_api.resolve_cma_credentials", lambda: {})
+
+    with pytest.raises(CMASourceError) as excinfo:
+        ensure_cma_source_files(tmp_path, filename, strict=True, start_year=1850, end_year=1850)
+
+    assert excinfo.value.status == "source_missing_credentials"
+    assert "CMA credentials are not configured" in str(excinfo.value)
+
+
+def test_ensure_cma_source_files_downloads_with_mocked_cmdc_api(monkeypatch, tmp_path):
+    filename = "CMA-SST_Global_Month_Temp_1981_2010.csv"
+
+    class DummyClient:
+        def __init__(self, user_id, output_dir):
+            self.output_dir = Path(output_dir)
+
+        def retrieve(self, params):
+            year = int(params["year"])
+            for month in range(1, 13):
+                _write_cma_grid(
+                    self.output_dir / f"SURF_CLI_GLB_MST_MON_GRID_2DEG_{year}{month:02d}.nc",
+                    np.ones((3, 2)) * month,
+                )
+
+    monkeypatch.setattr("climind.fetchers.fetcher_cma_api._load_cma_client", lambda: DummyClient)
+    monkeypatch.setattr(
+        "climind.fetchers.fetcher_cma_api.resolve_cma_credentials",
+        lambda: {"CMA_USER_ID": "test-user"},
+    )
+
+    result = ensure_cma_source_files(tmp_path, filename, strict=True, start_year=1850, end_year=1850)
+
+    assert result["status"] == "source_downloaded"
+    assert (tmp_path / filename).exists()
+    output = pd.read_csv(tmp_path / filename)
+    assert output.shape == (1, 13)
+    assert output.loc[0, "year"] == 1850
+
+
+def test_ensure_cma_source_files_retries_transient_cmdc_api_failure(monkeypatch, tmp_path):
+    filename = "CMA-SST_Global_Month_Temp_1981_2010.csv"
+    calls = {"count": 0}
+
+    class RetryClient:
+        def __init__(self, user_id, output_dir):
+            self.output_dir = Path(output_dir)
+
+        def retrieve(self, params):
+            calls["count"] += 1
+            if calls["count"] == 1:
+                raise TimeoutError("transient timeout")
+            year = int(params["year"])
+            for month in range(1, 13):
+                _write_cma_grid(
+                    self.output_dir / f"SURF_CLI_GLB_MST_MON_GRID_2DEG_{year}{month:02d}.nc",
+                    np.ones((3, 2)) * month,
+                )
+
+    monkeypatch.setattr("climind.fetchers.fetcher_cma_api._load_cma_client", lambda: RetryClient)
+    monkeypatch.setattr(
+        "climind.fetchers.fetcher_cma_api.resolve_cma_credentials",
+        lambda: {"CMA_USER_ID": "test-user"},
+    )
+    monkeypatch.setattr("climind.fetchers.fetcher_cma_api.time.sleep", lambda seconds: None)
+
+    result = ensure_cma_source_files(tmp_path, filename, strict=True, start_year=1850, end_year=1850)
+
+    assert calls["count"] == 2
+    assert result["status"] == "source_downloaded"
+    assert (tmp_path / filename).exists()

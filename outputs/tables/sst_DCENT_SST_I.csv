@@ -1,14 +1,14 @@
 Conventions,G,BADC-CSV,1
 title,G,Global ocean surface temperature anomaly
-last_revised_date,G,2026-06-05
-date_valid,G,2026-06-05
+last_revised_date,G,2026-06-08
+date_valid,G,2026-06-08
 feature_type,G,area average
 creator,G,WMO
 source,G,Produced by climind version 1.4.0
 observation_station,G,derived data
 location,G,90.,-180.,-90.,180.
 activity,G,WMO
-history,G,"Data set created from file ['annual_statistics/DCENT_DCENT_I_OST_annual_statistics_embargo.txt'] downloaded from ['https://www.dropbox.com/scl/fi/nxhtud84wxvvkfgrelwsq/DCENT_DCENT_I_OST_annual_statistics.txt?rlkey=w0q6eot2hjfcbfc84hda8nvw4&st=jdqccqw3&dl=1'] at ['2026-06-05 00:05:59']"
+history,G,"Data set created from file ['annual_statistics/DCENT_DCENT_I_OST_annual_statistics_embargo.txt'] downloaded from ['https://www.dropbox.com/scl/fi/nxhtud84wxvvkfgrelwsq/DCENT_DCENT_I_OST_annual_statistics.txt?rlkey=w0q6eot2hjfcbfc84hda8nvw4&st=jdqccqw3&dl=1'] at ['2026-06-05 18:45:31']"
 history,G,"Rebaselined to 1991-2020 by subtracting the arithemtic mean for that period from all data values."
 history,G,"Selected years within the range 1850 to 2025."
 reference,G,"Chan, D., Gebbie, G., Huybers, P., and Kent, E. C. (2024). A Dynamically Consistent ENsemble of Temperature at the Earth Surface since 1850 from the DCENT dataset. Scientific Data, 11, 953. https://doi.org/10.1038/s41597-024-03742-x."

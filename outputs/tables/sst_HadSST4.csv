@@ -1,14 +1,14 @@
 Conventions,G,BADC-CSV,1
 title,G,Global sea-surface temperature anomaly
-last_revised_date,G,2026-06-05
-date_valid,G,2026-06-05
+last_revised_date,G,2026-06-08
+date_valid,G,2026-06-08
 feature_type,G,area average
 creator,G,WMO
 source,G,Produced by climind version 1.4.0
 observation_station,G,derived data
 location,G,90.,-180.,-90.,180.
 activity,G,WMO
-history,G,"Data set created from file ['HadSST.4.2.0.0_monthly_GLOBE.csv'] downloaded from ['https://www.metoffice.gov.uk/hadobs/hadsst4/data/data/HadSST.4.2.0.0_monthly_GLOBE.csv'] at ['2026-06-04 14:24:09']"
+history,G,"Data set created from file ['HadSST.4.2.0.0_monthly_GLOBE.csv'] downloaded from ['https://www.metoffice.gov.uk/hadobs/hadsst4/data/data/HadSST.4.2.0.0_monthly_GLOBE.csv'] at ['2026-06-05 19:18:49']"
 history,G,"Calculated annual average from monthly averages using arithmetic mean"
 history,G,"Rebaselined to 1991-2020 by subtracting the arithemtic mean for that period from all data values."
 history,G,"Selected years within the range 1850 to 2025."

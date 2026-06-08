@@ -6,3 +6,5 @@ DCENT-SST-I,annual_statistics/DCENT_DCENT_I_OST_annual_statistics_embargo.txt,ti
 ERSST-v6,aravg.mon.ocean.90S.90N.v6.0.0.[0-9]*.asc,timeseries,monthly,999,False,False,False,False,type='timeseries' (need 'gridded'); space_resolution=999 (time-series sentinel)
 ERSST-v6,aravg.ann.ocean.90S.90N.v6.0.0.[0-9]*.asc,timeseries,annual,999,False,False,False,False,type='timeseries' (need 'gridded'); space_resolution=999 (time-series sentinel)
 HadSST4-SST,HadSST.4.2.0.0_monthly_GLOBE.csv,timeseries,monthly,999,False,False,False,False,type='timeseries' (need 'gridded'); space_resolution=999 (time-series sentinel)
+ERSST-v6-gridded,/Users/rjdellinger/data/multi-dataset-sst-manager/ManagedData/SeaSurfaceTemperature/Data/gridded/ERSST-v6-gridded/sst.mnmean.nc,gridded,monthly,2,True,True,True,True,
+HadSST4-gridded,/Users/rjdellinger/data/multi-dataset-sst-manager/ManagedData/SeaSurfaceTemperature/Data/gridded/HadSST4-gridded/HadSST.4.2.0.0_median.nc,gridded,monthly,5,True,True,True,True,

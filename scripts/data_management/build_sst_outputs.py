@@ -18,11 +18,12 @@ import importlib.util
 import io
 import json
 import os
+import re
 import shutil
 import sys
 from datetime import date, datetime, timezone
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional
+from typing import Dict, Iterable, List, Optional, Tuple
 from zipfile import ZipFile
 
 import numpy as np
@@ -40,7 +41,12 @@ from climind.data_types.timeseries import (
     TimeSeriesMonthly,
     write_dataset_summary_file_with_metadata,
 )
-from climind.fetchers.fetcher_cma_api import fetch as fetch_cma_api
+from climind.fetchers.fetcher_cma_api import (
+    CMASourceError,
+    ensure_cma_source_files,
+    resolve_cmdcapi_module,
+)
+from climind.fetchers.fetcher_sst_gridded_url import fetch_with_retries
 
 
 # The SST-pipeline collection metadata live in a dedicated subfolder under the
@@ -112,6 +118,9 @@ PROCESSING_SELECT = {
 SUMMARY_OUTPUT_NAME = "sst_summary.csv"
 MERGED_OUTPUT_NAME = "merged_global_sst_reconstructions_annual_1850_2025_baseline_1991_2020.csv"
 FIGURE_OUTPUT_NAME = "global_sea_surface_temperature_1850_2025_reference_style.png"
+BASELINE_AUDIT_NAME = "sst_baseline_audit.csv"
+TARGET_CLIMATOLOGY = (1991, 2020)
+TARGET_YEAR_RANGE = (1850, 2025)
 
 # Per-dataset validation tolerances; anything not listed uses the default.
 DATASET_VALIDATION_TOLERANCES = {"CMA-SST": CMA_VALIDATION_TOLERANCE}
@@ -119,6 +128,13 @@ DATASET_VALIDATION_TOLERANCES = {"CMA-SST": CMA_VALIDATION_TOLERANCE}
 # the dataset whose tolerance applies.
 OUTPUT_TO_DATASET = {output: dataset for dataset, output in OUTPUT_NAMES.items()}
 SUMMARY_COLUMN_TO_DATASET = {column: dataset for dataset, column in SUMMARY_COLUMN_NAMES.items()}
+METADATA_FILE_BY_DATASET = dict(zip(DATASET_ORDER, SST_METADATA_FILES))
+SOURCE_FAILURE_STATUSES = {
+    "source_missing",
+    "source_missing_sdk",
+    "source_missing_credentials",
+    "source_validation_failed",
+}
 
 
 def tolerance_for(output_name: str, column: str) -> float:
@@ -199,6 +215,15 @@ def sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def redact_sensitive_text(value: object) -> str:
+    """Redact credential-bearing CMA URL fragments before writing QA logs."""
+    text = str(value)
+    cma_user_id = os.getenv("CMA_USER_ID")
+    if cma_user_id:
+        text = text.replace(cma_user_id, "<CMA_USER_ID>")
+    return re.sub(r"(userId=)[^&\\s)]+", r"\1<CMA_USER_ID>", text)
+
+
 def ensure_direct_file(url: str, destination: Path) -> Dict[str, object]:
     destination.parent.mkdir(parents=True, exist_ok=True)
     if destination.exists():
@@ -221,12 +246,7 @@ def ensure_direct_file(url: str, destination: Path) -> Dict[str, object]:
             "sha256": sha256(destination),
         }
 
-    response = requests.get(url, stream=True, timeout=120, headers={"User-agent": "Mozilla/5.0"})
-    response.raise_for_status()
-    with destination.open("wb") as handle:
-        for chunk in response.iter_content(chunk_size=1024 * 1024):
-            if chunk:
-                handle.write(chunk)
+    fetch_with_retries(url, destination.parent, destination.name)
 
     return {
         "filename": destination.name,
@@ -259,10 +279,11 @@ def find_existing_raw_source(filename: str) -> Optional[Path]:
 
 
 def cmdcapi_available() -> bool:
-    local_sdk_dir = PROJECT_ROOT / "climind" / "fetchers" / "local_sdk"
-    if local_sdk_dir.exists() and str(local_sdk_dir) not in sys.path:
-        sys.path.insert(0, str(local_sdk_dir))
-    return importlib.util.find_spec("CMDCapi") is not None
+    try:
+        resolve_cmdcapi_module()
+    except ImportError:
+        return False
+    return True
 
 
 def ensure_cma_api_file(dataset_name: str, url: str, filename: str, reason: str) -> Dict[str, object]:
@@ -276,9 +297,10 @@ def ensure_cma_api_file(dataset_name: str, url: str, filename: str, reason: str)
             "sha256": sha256(destination),
         }
 
+    source_dir = destination.parent
     existing = find_existing_raw_source(filename)
     if existing is not None:
-        destination.parent.mkdir(parents=True, exist_ok=True)
+        source_dir.mkdir(parents=True, exist_ok=True)
         shutil.copy2(existing, destination)
         return {
             "filename": destination.name,
@@ -289,8 +311,8 @@ def ensure_cma_api_file(dataset_name: str, url: str, filename: str, reason: str)
         }
 
     try:
-        fetch_cma_api(url, destination.parent, filename)
-    except Exception as exc:
+        result = ensure_cma_source_files(source_dir, filename, strict=True)
+    except CMASourceError as exc:
         cma_user_id_present = bool(os.getenv("CMA_USER_ID"))
         cmdcapi_present = cmdcapi_available()
         diagnostics = []
@@ -304,17 +326,32 @@ def ensure_cma_api_file(dataset_name: str, url: str, filename: str, reason: str)
         return {
             "filename": filename,
             "source_url": url,
-            "status": "source_missing",
+            "status": exc.status,
             "bytes": 0,
             "sha256": "",
-            "reason": f"{reason} Fetch failed: {exc}. Diagnostics: {', '.join(diagnostics)}.",
+            "reason": (
+                f"{reason} Fetch failed: {redact_sensitive_text(exc)}. "
+                f"Diagnostics: {', '.join(diagnostics)}."
+            ),
+        }
+    except Exception as exc:
+        return {
+            "filename": filename,
+            "source_url": url,
+            "status": "source_validation_failed",
+            "bytes": 0,
+            "sha256": "",
+            "reason": (
+                f"{reason} CMA source acquisition failed unexpectedly: "
+                f"{redact_sensitive_text(exc)}"
+            ),
         }
 
     if destination.exists():
         return {
             "filename": destination.name,
             "source_url": url,
-            "status": "downloaded",
+            "status": result.get("status", "source_downloaded"),
             "bytes": destination.stat().st_size,
             "sha256": sha256(destination),
         }
@@ -378,7 +415,152 @@ def managed_sst_root() -> Path:
     return Path(data_dir) / "ManagedData" / "SeaSurfaceTemperature"
 
 
-def process_dataset(collection: dm.DataCollection, dataset_name: str) -> TimeSeriesAnnual:
+def metadata_get(metadata, key: str, default=None):
+    try:
+        if key in metadata:
+            return metadata[key]
+    except TypeError:
+        pass
+    if hasattr(metadata, "get"):
+        return metadata.get(key, default)
+    return default
+
+
+def snapshot_metadata(metadata) -> Dict[str, object]:
+    keys = [
+        "filename",
+        "url",
+        "fetcher",
+        "reader",
+        "type",
+        "time_resolution",
+        "space_resolution",
+        "actual",
+        "climatology_start",
+        "climatology_end",
+    ]
+    return {
+        key: copy.deepcopy(metadata_get(metadata, key))
+        for key in keys
+        if metadata_get(metadata, key) is not None
+    }
+
+
+def resolve_source_value_type(metadata) -> str:
+    actual = metadata_get(metadata, "actual")
+    if isinstance(actual, (bool, np.bool_)):
+        return "actual" if actual else "anomaly"
+    raise RuntimeError(
+        "unknown source value type: SST metadata must set `actual` to True "
+        "for actual values or False for anomaly values."
+    )
+
+
+def annual_baseline_mean(dataset: TimeSeriesAnnual, start_year: int, end_year: int) -> float:
+    climatology_part = dataset.df[
+        (dataset.df["year"] >= start_year) & (dataset.df["year"] <= end_year)
+    ]["data"]
+    if climatology_part.dropna().empty:
+        raise RuntimeError(
+            f"Cannot calculate {start_year}-{end_year} baseline adjustment for "
+            f"{dataset.metadata['name']}; no finite annual values are available."
+        )
+    return float(climatology_part.mean())
+
+
+def annual_output_coverage_fraction(dataset: TimeSeriesAnnual) -> float:
+    if dataset.df.empty:
+        return float("nan")
+    first_year = int(dataset.df["year"].min())
+    last_year = int(dataset.df["year"].max())
+    expected_years = last_year - first_year + 1
+    if expected_years <= 0:
+        return float("nan")
+    return float(dataset.df["data"].notna().sum() / expected_years)
+
+
+def validate_monthly_coverage(dataset: TimeSeriesMonthly) -> float:
+    selected = dataset.df[
+        (dataset.df["year"] >= TARGET_YEAR_RANGE[0])
+        & (dataset.df["year"] <= TARGET_YEAR_RANGE[1])
+    ]
+    month_counts = selected.groupby("year")["month"].nunique()
+    if month_counts.empty:
+        raise RuntimeError(f"{dataset.metadata['name']} has no monthly values in the target year range.")
+
+    incomplete = month_counts[month_counts != 12]
+    if not incomplete.empty:
+        examples = ", ".join(f"{int(year)}:{int(count)}" for year, count in incomplete.head(10).items())
+        raise RuntimeError(
+            f"{dataset.metadata['name']} has incomplete monthly coverage before annualization "
+            f"for target years ({examples})."
+        )
+
+    return float(month_counts.sum() / (len(month_counts) * 12))
+
+
+def build_baseline_audit_record(
+    dataset_name: str,
+    output_name: str,
+    source_dataset,
+    annual_before_rebaseline: TimeSeriesAnnual,
+    annual_after_processing: TimeSeriesAnnual,
+    annualization_method: str,
+    monthly_coverage_fraction: Optional[float] = None,
+    source_metadata: Optional[Dict[str, object]] = None,
+) -> Dict[str, object]:
+    metadata = source_metadata if source_metadata is not None else source_dataset.metadata
+    source_value_type = resolve_source_value_type(metadata)
+    native_start = metadata_get(metadata, "climatology_start")
+    native_end = metadata_get(metadata, "climatology_end")
+    target_start, target_end = TARGET_CLIMATOLOGY
+    baseline_adjustment = annual_baseline_mean(annual_before_rebaseline, target_start, target_end)
+
+    filenames = metadata_get(metadata, "filename", [])
+    urls = metadata_get(metadata, "url", [])
+    if isinstance(filenames, str):
+        filenames = [filenames]
+    if isinstance(urls, str):
+        urls = [urls]
+    source_dir_name = SOURCE_DIR_NAMES.get(dataset_name, dataset_name)
+    managed_inputs = [
+        str(managed_sst_data_dir() / source_dir_name / Path(filename))
+        for filename in filenames
+    ]
+
+    processing_history_entry = "actual_to_anomaly" if source_value_type == "actual" else "anomaly_rebaseline"
+    coverage_fraction = (
+        monthly_coverage_fraction
+        if monthly_coverage_fraction is not None
+        else annual_output_coverage_fraction(annual_after_processing)
+    )
+
+    return {
+        "dataset": dataset_name,
+        "metadata_file": str(METADATA_FILE_BY_DATASET.get(dataset_name, "")),
+        "source_url": ";".join(str(url) for url in urls),
+        "fetcher": metadata_get(metadata, "fetcher", ""),
+        "reader": metadata_get(metadata, "reader", ""),
+        "managed_input_path": ";".join(managed_inputs),
+        "type": metadata_get(metadata, "type", ""),
+        "time_resolution": metadata_get(metadata, "time_resolution", ""),
+        "space_resolution": metadata_get(metadata, "space_resolution", ""),
+        "source_value_type": source_value_type,
+        "native_climatology_start": native_start,
+        "native_climatology_end": native_end,
+        "target_climatology_start": target_start,
+        "target_climatology_end": target_end,
+        "baseline_adjustment_C": baseline_adjustment,
+        "annualization_method": annualization_method,
+        "coverage_fraction": coverage_fraction,
+        "output_path": str(OUTPUT_DIR / output_name),
+        "qa_tolerance": tolerance_for(output_name, "data"),
+        "processing_history_entry": processing_history_entry,
+        "status": "ok",
+    }
+
+
+def process_dataset(collection: dm.DataCollection, dataset_name: str, output_name: str) -> Tuple[TimeSeriesAnnual, Dict[str, object]]:
     selected = collection.match_metadata(PROCESSING_SELECT[dataset_name])
     if selected is None:
         raise RuntimeError(f"No dataset in {dataset_name} matched {PROCESSING_SELECT[dataset_name]}.")
@@ -387,15 +569,39 @@ def process_dataset(collection: dm.DataCollection, dataset_name: str) -> TimeSer
     if len(read_datasets) != 1:
         raise RuntimeError(f"Expected exactly one selected dataset for {collection.global_attributes['name']}.")
 
-    dataset = read_datasets[0]
-    if isinstance(dataset, TimeSeriesMonthly):
-        dataset = dataset.make_annual()
-    elif not isinstance(dataset, TimeSeriesAnnual):
-        raise TypeError(f"Expected a monthly or annual time series, got {type(dataset)}.")
+    source_dataset = read_datasets[0]
+    source_metadata = snapshot_metadata(source_dataset.metadata)
+    resolve_source_value_type(source_metadata)
+    monthly_coverage_fraction = None
+    if isinstance(source_dataset, TimeSeriesMonthly):
+        monthly_coverage_fraction = validate_monthly_coverage(source_dataset)
+        dataset = source_dataset.make_annual()
+        annualization_method = "arithmetic_mean_of_monthly_values"
+    elif isinstance(source_dataset, TimeSeriesAnnual):
+        dataset = source_dataset
+        annualization_method = "native_annual_values"
+    else:
+        raise TypeError(f"Expected a monthly or annual time series, got {type(source_dataset)}.")
 
-    dataset.rebaseline(1991, 2020)
-    dataset.select_year_range(1850, 2025)
-    return dataset
+    annual_before_rebaseline = copy.deepcopy(dataset)
+    if resolve_source_value_type(annual_before_rebaseline.metadata) == "actual":
+        dataset.update_history(
+            "actual_to_anomaly: converted actual SST values to 1991-2020 anomalies "
+            "using TimeSeriesAnnual.rebaseline."
+        )
+    dataset.rebaseline(*TARGET_CLIMATOLOGY)
+    dataset.select_year_range(*TARGET_YEAR_RANGE)
+    audit_record = build_baseline_audit_record(
+        dataset_name=dataset_name,
+        output_name=output_name,
+        source_dataset=source_dataset,
+        annual_before_rebaseline=annual_before_rebaseline,
+        annual_after_processing=dataset,
+        annualization_method=annualization_method,
+        monthly_coverage_fraction=monthly_coverage_fraction,
+        source_metadata=source_metadata,
+    )
+    return dataset, audit_record
 
 
 def write_merged_processed_csv(datasets: List[TimeSeriesAnnual]) -> pd.DataFrame:
@@ -415,35 +621,13 @@ def write_reference_style_figure(merged: pd.DataFrame) -> None:
     figures_dir = managed_sst_root() / "Figures"
     figures_dir.mkdir(parents=True, exist_ok=True)
 
-    label_map = {
-        "CMA_SST": "CMA-SST",
-        "CMEMS_SST": "CMEMS",
-        "DCENT_SST_I": "DCENT-I",
-        "ERSST_v6": "ERSST v6",
-        "HadSST4": "HadSST4",
-    }
-    colour_map = {
-        "CMA_SST": "black",
-        "CMEMS_SST": "royalblue",
-        "DCENT_SST_I": "darkorange",
-        "ERSST_v6": "firebrick",
-        "HadSST4": "seagreen",
-    }
+    from scripts.sea_surface_temperature.plot_global_sst_reference_figure import (
+        normalize_sst_plot_frame,
+        plot_global_sst_reconstructions,
+    )
 
-    fig, ax = plt.subplots(figsize=(10, 5.8))
-    for column, label in label_map.items():
-        if column in merged:
-            ax.plot(merged["year"], merged[column], label=label, linewidth=1.4, color=colour_map[column])
-
-    ax.axhline(0, color="0.35", linewidth=0.8)
-    ax.set_xlim(1850, 2025)
-    ax.set_xlabel("Year")
-    ax.set_ylabel("Sea-surface temperature anomaly (degC, 1991-2020 baseline)")
-    ax.set_title("Annual global mean sea-surface temperature, 1850-2025")
-    ax.legend(frameon=False, ncol=2)
-    ax.grid(True, axis="y", color="0.85", linewidth=0.6)
-    fig.tight_layout()
-    fig.savefig(figures_dir / FIGURE_OUTPUT_NAME, dpi=300)
+    fig = plot_global_sst_reconstructions(normalize_sst_plot_frame(merged))
+    fig.savefig(figures_dir / FIGURE_OUTPUT_NAME, dpi=100, facecolor="white", edgecolor="none")
     plt.close(fig)
 
 
@@ -544,7 +728,7 @@ def validate_outputs() -> pd.DataFrame:
     return validation
 
 
-def build_outputs(allow_partial: bool) -> int:
+def _build_outputs_current_dir(allow_partial: bool) -> int:
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     QA_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -552,6 +736,7 @@ def build_outputs(allow_partial: bool) -> int:
     archive = archive_from_sst_metadata()
     processed: List[TimeSeriesAnnual] = []
     processing_records = []
+    baseline_audit_records = []
 
     for dataset_name in DATASET_ORDER:
         output_name = OUTPUT_NAMES[dataset_name]
@@ -561,22 +746,23 @@ def build_outputs(allow_partial: bool) -> int:
             )
             continue
 
+        status = acquisition["status"].astype(str)
         missing_sources = acquisition[
-            (acquisition["dataset"] == dataset_name) & (acquisition["status"] == "source_missing")
+            (acquisition["dataset"] == dataset_name) & (status.isin(SOURCE_FAILURE_STATUSES))
         ]
         if len(missing_sources):
             processing_records.append(
                 {
                     "dataset": dataset_name,
                     "output": output_name,
-                    "status": "source_missing",
+                    "status": str(missing_sources["status"].iloc[0]),
                     "message": "; ".join(missing_sources["reason"].dropna().astype(str).tolist()),
                 }
             )
             continue
 
         try:
-            dataset = process_dataset(archive.collections[dataset_name], dataset_name)
+            dataset, audit_record = process_dataset(archive.collections[dataset_name], dataset_name, output_name)
             dataset.write_csv(OUTPUT_DIR / output_name)
         except Exception as exc:
             processing_records.append(
@@ -585,6 +771,7 @@ def build_outputs(allow_partial: bool) -> int:
             continue
 
         processed.append(dataset)
+        baseline_audit_records.append(audit_record)
         processing_records.append(
             {
                 "dataset": dataset_name,
@@ -596,6 +783,8 @@ def build_outputs(allow_partial: bool) -> int:
 
     processing = pd.DataFrame(processing_records)
     processing.to_csv(QA_DIR / "sst_processing_log.csv", index=False)
+    baseline_audit = pd.DataFrame(baseline_audit_records)
+    baseline_audit.to_csv(QA_DIR / BASELINE_AUDIT_NAME, index=False)
 
     processed_names = {dataset.metadata["name"] for dataset in processed}
     if all(name in processed_names for name in DATASET_ORDER):
@@ -608,10 +797,6 @@ def build_outputs(allow_partial: bool) -> int:
         write_dataset_summary_file_with_metadata(summary_datasets, OUTPUT_DIR / SUMMARY_OUTPUT_NAME)
         merged = write_merged_processed_csv(ordered)
         write_reference_style_figure(merged)
-    elif not allow_partial and processed:
-        summary_path = OUTPUT_DIR / SUMMARY_OUTPUT_NAME
-        if summary_path.exists():
-            summary_path.unlink()
 
     validation = validate_outputs()
     validation_records = validation.to_dict(orient="records")
@@ -619,6 +804,7 @@ def build_outputs(allow_partial: bool) -> int:
         "created_at_utc": datetime.now(timezone.utc).isoformat(),
         "allow_partial": allow_partial,
         "processed": processing_records,
+        "baseline_audit": baseline_audit_records,
         "validation": validation_records,
     }
     (QA_DIR / "sst_workflow_summary.json").write_text(json.dumps(qa_payload, indent=2), encoding="utf-8")
@@ -633,7 +819,79 @@ def build_outputs(allow_partial: bool) -> int:
         print("SST workflow produced outputs with validation differences. See outputs/logs/qa/sst_reference_validation.csv.")
         return 1
 
+    if not baseline_audit.empty:
+        bad_baseline = baseline_audit[baseline_audit["status"] != "ok"]
+        if len(bad_baseline) and not allow_partial:
+            print("SST workflow baseline audit failed. See outputs/logs/qa/sst_baseline_audit.csv.")
+            return 1
+
     return 0
+
+
+def _required_output_files() -> list[str]:
+    """Return the strict six-output CSV contract."""
+    return [OUTPUT_NAMES[name] for name in DATASET_ORDER] + [SUMMARY_OUTPUT_NAME]
+
+
+def _replace_final_outputs_from_temp(temp_output_dir: Path, final_output_dir: Path) -> None:
+    """Replace final SST CSV outputs only after the temporary build is complete."""
+    missing = [name for name in _required_output_files() if not (temp_output_dir / name).exists()]
+    if missing:
+        raise RuntimeError(
+            "Temporary SST build did not produce all required outputs: "
+            + ", ".join(missing)
+        )
+
+    final_output_dir.mkdir(parents=True, exist_ok=True)
+    for name in _required_output_files():
+        shutil.copy2(temp_output_dir / name, final_output_dir / name)
+
+
+def _rewrite_temp_paths_in_qa(temp_output_dir: Path, final_output_dir: Path) -> None:
+    """Rewrite temporary output paths in QA text artifacts after a successful swap."""
+    replacements = [
+        QA_DIR / BASELINE_AUDIT_NAME,
+        QA_DIR / "sst_workflow_summary.json",
+    ]
+    for path in replacements:
+        if not path.exists():
+            continue
+        text = path.read_text(encoding="utf-8")
+        path.write_text(text.replace(str(temp_output_dir), str(final_output_dir)), encoding="utf-8")
+
+
+def build_outputs(allow_partial: bool) -> int:
+    if allow_partial:
+        return _build_outputs_current_dir(allow_partial=True)
+
+    final_output_dir = OUTPUT_DIR
+    temp_output_dir = final_output_dir.parent / f".{final_output_dir.name}.tmp.{os.getpid()}"
+    if temp_output_dir.exists():
+        shutil.rmtree(temp_output_dir)
+
+    original_output_dir = OUTPUT_DIR
+    try:
+        globals()["OUTPUT_DIR"] = temp_output_dir
+        result = _build_outputs_current_dir(allow_partial=False)
+        if result != 0:
+            return result
+
+        _replace_final_outputs_from_temp(temp_output_dir, final_output_dir)
+        globals()["OUTPUT_DIR"] = final_output_dir
+        validation = validate_outputs()
+        bad_validation = validation[~validation["status"].isin(["ok"])]
+        if len(bad_validation):
+            print(
+                "SST workflow produced outputs with validation differences after final replacement. "
+                "See outputs/logs/qa/sst_reference_validation.csv."
+            )
+            return 1
+        _rewrite_temp_paths_in_qa(temp_output_dir, final_output_dir)
+        return 0
+    finally:
+        globals()["OUTPUT_DIR"] = original_output_dir
+        if temp_output_dir.exists():
+            shutil.rmtree(temp_output_dir)
 
 
 def main(argv: Optional[Iterable[str]] = None) -> int:

@@ -1,0 +1,42 @@
+{
+  "name": "ERSST-v6-gridded",
+  "display_name": "ERSST v6 gridded",
+  "version": "v6",
+  "variable": "sst",
+  "units": "degC",
+  "citation": [
+    "Huang, B. et al. (2024). Improvements of the Daily Optimum Interpolation Sea Surface Temperature (DOISST) Version 2.1. Journal of Climate."
+  ],
+  "citation_url": [
+    "https://psl.noaa.gov/data/gridded/data.noaa.ersst.v6.html"
+  ],
+  "data_citation": [
+    "NOAA Physical Sciences Laboratory. NOAA Extended Reconstructed SST V6 gridded monthly SST. https://psl.noaa.gov/thredds/catalog/Datasets/noaa.ersst.v6/catalog.html."
+  ],
+  "acknowledgement": "NOAA Extended Reconstructed SST V6 data were provided by the NOAA PSL, Boulder, Colorado, USA, from their website at https://psl.noaa.gov.",
+  "colour": "deepskyblue",
+  "zpos": 90,
+  "origin": "obs",
+  "notes": "Separate gridded SST metadata for optional spatial processing. This collection must not be selected by the strict six-output global SST reference workflow.",
+  "datasets": [
+    {
+      "url": [
+        "https://psl.noaa.gov/thredds/fileServer/Datasets/noaa.ersst.v6/sst.mnmean.nc"
+      ],
+      "filename": [
+        "sst.mnmean.nc"
+      ],
+      "type": "gridded",
+      "long_name": "NOAA Extended Reconstructed SST v6 monthly gridded sea-surface temperature",
+      "time_resolution": "monthly",
+      "space_resolution": 2,
+      "climatology_start": 1991,
+      "climatology_end": 2020,
+      "actual": true,
+      "derived": false,
+      "history": [],
+      "reader": "reader_ersst_v6_gridded",
+      "fetcher": "fetcher_ersst_v6_gridded"
+    }
+  ]
+}
