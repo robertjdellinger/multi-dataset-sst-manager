@@ -77,7 +77,7 @@ CSV is missing.
 | --- | --- | --- | --- | --- | --- | --- | ---: | ---: |
 | CMA-SST | `cma_sst.json` | `reader_cma_gmst` | `$DATADIR/ManagedData/SeaSurfaceTemperature/Data/CMA-SST/CMA-SST_Global_Month_Temp_1981_2010.csv` | anomaly | 1981-2010 | 1850-2025 | 176 | 0.20 degC |
 | CMEMS-SST | `cmems_sst.json` | `reader_cmems_sst_area_average` | `$DATADIR/ManagedData/SeaSurfaceTemperature/Data/CMEMS-SST/global_omi_tempsal_sst_area_averaged_anomalies_19820101-20241231_R19912020_P20250516.nc` | anomaly | 1991-2020 | 1982-2024 | 43 | 0.01 degC |
-| DCENT-SST-I | `dcent_sst_i.json` | `reader_dcenti` | `$DATADIR/ManagedData/SeaSurfaceTemperature/Data/DCENT-SST-I/DCENT_DCENT_I_OST_monthly_statistics.txt` | anomaly | 1991-2020 | 1850-2025 | 176 | 0.01 degC |
+| DCENT-SST-I | `dcent_sst_i.json` | `reader_dcenti` | `$DATADIR/ManagedData/SeaSurfaceTemperature/Data/DCENT-SST-I/DCENT_DCENT_I_OST_monthly_statistics.txt` | anomaly | 1982-2014 | 1850-2025 | 176 | 0.01 degC |
 | ERSST-v6 | `ersst_v6.json` | `reader_noaaglobaltemp` | `$DATADIR/ManagedData/SeaSurfaceTemperature/Data/ERSST-v6/aravg.mon.ocean.90S.90N.v6.0.0.202512.asc` | anomaly | 1991-2020 | 1850-2025 | 176 | 0.01 degC |
 | HadSST4-SST | `hadsst4.json` | `reader_hadsst_ts` | `$DATADIR/ManagedData/SeaSurfaceTemperature/Data/HadSST4-SST/HadSST.4.2.0.0_monthly_GLOBE.csv` | anomaly | 1961-1990 | 1850-2025 | 176 | 0.01 degC |
 
@@ -89,7 +89,9 @@ The generated data blocks are validated against
 DCENT-I uses the monthly ocean-statistics source as the active processing
 input. The annual ocean-statistics source is retained in metadata only as a
 cross-check for uncertainty attachment and validation; it is not the selected
-strict data-value source.
+strict data-value source. The DCENT-I anomaly basis is documented as 1982-2014,
+so the strict builder explicitly rebases the annualized monthly ocean-statistics
+series to 1991-2020 before writing `sst_DCENT_SST_I.csv`.
 
 The canonical DCENT-I landing page recorded in metadata is:
 

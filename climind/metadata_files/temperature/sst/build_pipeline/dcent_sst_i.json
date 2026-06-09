@@ -22,7 +22,7 @@
   "colour": "darkorange",
   "zpos": 97,
   "origin": "obs",
-  "notes": "The strict formatted DCENT-I output uses the monthly ocean surface temperature statistics file as the active processing source. The workflow reads the monthly ocean-statistics anomaly series, checks complete monthly coverage, annualizes by arithmetic mean, rebases the annual series to 1991-2020, and writes outputs/tables/sst_DCENT_SST_I.csv. The annual ocean-statistics file is retained only as an optional validation or cross-check source and is not selected by scripts/data_management/build_sst_outputs.py --strict.",
+  "notes": "The strict formatted DCENT-I output uses the monthly ocean surface temperature statistics file as the active processing source. The workflow reads the monthly ocean-statistics anomaly series, checks complete monthly coverage, annualizes by arithmetic mean, rebases the annual series from its documented 1982-2014 anomaly basis to 1991-2020, and writes outputs/tables/sst_DCENT_SST_I.csv. The annual ocean-statistics file is retained only as an optional validation or cross-check source and is not selected by scripts/data_management/build_sst_outputs.py --strict.",
   "datasets": [
     {
       "url": [
@@ -35,8 +35,8 @@
       "long_name": "Global ocean surface temperature anomaly",
       "time_resolution": "monthly",
       "space_resolution": 999,
-      "climatology_start": 1991,
-      "climatology_end": 2020,
+      "climatology_start": 1982,
+      "climatology_end": 2014,
       "actual": false,
       "derived": false,
       "history": [],
@@ -54,8 +54,8 @@
       "long_name": "Global ocean surface temperature anomaly",
       "time_resolution": "annual",
       "space_resolution": 999,
-      "climatology_start": 1991,
-      "climatology_end": 2020,
+      "climatology_start": 1982,
+      "climatology_end": 2014,
       "actual": false,
       "derived": false,
       "history": [],

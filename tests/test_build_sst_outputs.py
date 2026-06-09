@@ -91,8 +91,8 @@ def test_dcent_build_metadata_uses_monthly_ocean_statistics_as_active_source():
     assert active_dataset["type"] == "timeseries"
     assert active_dataset["time_resolution"] == "monthly"
     assert active_dataset["space_resolution"] == 999
-    assert active_dataset["climatology_start"] == 1991
-    assert active_dataset["climatology_end"] == 2020
+    assert active_dataset["climatology_start"] == 1982
+    assert active_dataset["climatology_end"] == 2014
     assert active_dataset["actual"] is False
     assert active_dataset["reader"] == "reader_dcenti"
     assert active_dataset["fetcher"] == "fetcher_standard_url_with_rename"

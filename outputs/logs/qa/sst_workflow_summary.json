@@ -1,5 +1,5 @@
 {
-  "created_at_utc": "2026-06-09T05:36:55.902227+00:00",
+  "created_at_utc": "2026-06-09T07:36:58.183969+00:00",
   "allow_partial": false,
   "processed": [
     {
@@ -94,8 +94,8 @@
       "time_resolution": "monthly",
       "space_resolution": 999,
       "source_value_type": "anomaly",
-      "native_climatology_start": 1991,
-      "native_climatology_end": 2020,
+      "native_climatology_start": 1982,
+      "native_climatology_end": 2014,
       "target_climatology_start": 1991,
       "target_climatology_end": 2020,
       "baseline_adjustment_C": 0.13761111111111113,

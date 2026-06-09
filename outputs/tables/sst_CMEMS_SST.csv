@@ -1,14 +1,14 @@
 Conventions,G,BADC-CSV,1
 title,G,Global area-averaged sea-surface temperature anomaly
-last_revised_date,G,2026-06-08
-date_valid,G,2026-06-08
+last_revised_date,G,2026-06-09
+date_valid,G,2026-06-09
 feature_type,G,area average
 creator,G,WMO
 source,G,Produced by climind version 1.4.0
 observation_station,G,derived data
 location,G,90.,-180.,-90.,180.
 activity,G,WMO
-history,G,"Data set created from file ['global_omi_tempsal_sst_area_averaged_anomalies_19820101-20241231_R19912020_P20250516.nc'] downloaded from ['https://data.marine.copernicus.eu/product/GLOBAL_OMI_TEMPSAL_sst_area_averaged_anomalies/services'] at ['2026-06-04 19:24:16']"
+history,G,"Data set created from file ['global_omi_tempsal_sst_area_averaged_anomalies_19820101-20241231_R19912020_P20250516.nc'] downloaded from ['https://data.marine.copernicus.eu/product/GLOBAL_OMI_TEMPSAL_sst_area_averaged_anomalies/services'] at ['2026-06-05 18:45:29']"
 history,G,"Calculated annual average from monthly averages using arithmetic mean"
 history,G,"Rebaselined to 1991-2020 by subtracting the arithemtic mean for that period from all data values."
 history,G,"Selected years within the range 1850 to 2025."

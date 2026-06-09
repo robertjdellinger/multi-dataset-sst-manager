@@ -128,6 +128,8 @@ def test_dcent_build_pipeline_metadata_uses_monthly_ocean_statistics_source():
     assert active_dataset["filename"] == ["DCENT_DCENT_I_OST_monthly_statistics.txt"]
     assert active_dataset["time_resolution"] == "monthly"
     assert active_dataset["space_resolution"] == 999
+    assert active_dataset["climatology_start"] == 1982
+    assert active_dataset["climatology_end"] == 2014
     assert active_dataset["reader"] == "reader_dcenti"
 
 

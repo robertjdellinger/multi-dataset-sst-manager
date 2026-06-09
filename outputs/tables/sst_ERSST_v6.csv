@@ -1,14 +1,14 @@
 Conventions,G,BADC-CSV,1
 title,G,Global ocean sea-surface temperature anomaly
-last_revised_date,G,2026-06-08
-date_valid,G,2026-06-08
+last_revised_date,G,2026-06-09
+date_valid,G,2026-06-09
 feature_type,G,area average
 creator,G,WMO
 source,G,Produced by climind version 1.4.0
 observation_station,G,derived data
 location,G,90.,-180.,-90.,180.
 activity,G,WMO
-history,G,"Data set created from file ['aravg.mon.ocean.90S.90N.v6.0.0.202512.asc'] downloaded from ['https://www.ncei.noaa.gov/data/noaa-global-surface-temperature/v6/access/timeseries/aravg.mon.ocean.90S.90N.v6.0.0.202512.asc'] at ['2026-06-04 14:24:11']"
+history,G,"Data set created from file ['aravg.mon.ocean.90S.90N.v6.0.0.202512.asc'] downloaded from ['https://www.ncei.noaa.gov/data/noaa-global-surface-temperature/v6/access/timeseries/aravg.mon.ocean.90S.90N.v6.0.0.202512.asc'] at ['2026-06-05 18:48:51']"
 history,G,"Calculated annual average from monthly averages using arithmetic mean"
 history,G,"Rebaselined to 1991-2020 by subtracting the arithemtic mean for that period from all data values."
 history,G,"Selected years within the range 1850 to 2025."

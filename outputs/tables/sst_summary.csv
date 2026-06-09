@@ -1,7 +1,7 @@
 Conventions,G,BADC-CSV,1
 title,G,Global sea-surface temperature anomaly
-last_revised_date,G,2026-06-08
-date_valid,G,2026-06-08
+last_revised_date,G,2026-06-09
+date_valid,G,2026-06-09
 feature_type,G,area average
 creator,G,WMO
 source,G,Produced by climind version 1.4.0
@@ -10,21 +10,21 @@ location,G,90.,-180.,-90.,180.
 rights,G,TBD
 activity,G,WMO
 comments,G,Format description https://help.ceda.ac.uk/article/105-badc-csv
-history,CMA_SST,"Data set created from file ['CMA-SST_Global_Month_Temp_1981_2010.csv'] downloaded from ['https://data.cma.cn/en/#/Visualization/Visualization-detail?id=16'] at ['2026-06-05 05:32:30']"
+history,CMA_SST,"Data set created from file ['CMA-SST_Global_Month_Temp_1981_2010.csv'] downloaded from ['https://data.cma.cn/en/#/Visualization/Visualization-detail?id=16'] at ['2026-06-06 07:30:51']"
 history,CMA_SST,"Calculated annual average from monthly averages using arithmetic mean"
 history,CMA_SST,"Rebaselined to 1991-2020 by subtracting the arithemtic mean for that period from all data values."
 history,CMA_SST,"Selected years within the range 1850 to 2025."
 reference,CMA_SST,"Chen, L., Cao, L., Zhou, Z., Zhang, D., and Liao, J. (2021). A new globally reconstructed sea surface temperature analysis dataset since 1900. Journal of Meteorological Research, 35, 911-925. https://doi.org/10.1007/s13351-021-1098-7."
 reference,CMA_SST,"Chen, L., Xu, W., Zhou, Z. et al. A new global land-ocean merged surface temperature dataset since the 1850s: the CMA-GMST dataset. Climate Dynamics, 63, 187 (2025). https://doi.org/10.1007/s00382-025-07614-x."
 comments,CMA_SST,"Original data acknowledgement: CMA-SST/CMA-GMST data were obtained from the China Meteorological Administration data service. Record the exact access date and source file used during processing."
-history,CMEMS_SST,"Data set created from file ['global_omi_tempsal_sst_area_averaged_anomalies_19820101-20241231_R19912020_P20250516.nc'] downloaded from ['https://data.marine.copernicus.eu/product/GLOBAL_OMI_TEMPSAL_sst_area_averaged_anomalies/services'] at ['2026-06-04 19:24:16']"
+history,CMEMS_SST,"Data set created from file ['global_omi_tempsal_sst_area_averaged_anomalies_19820101-20241231_R19912020_P20250516.nc'] downloaded from ['https://data.marine.copernicus.eu/product/GLOBAL_OMI_TEMPSAL_sst_area_averaged_anomalies/services'] at ['2026-06-05 18:45:29']"
 history,CMEMS_SST,"Calculated annual average from monthly averages using arithmetic mean"
 history,CMEMS_SST,"Rebaselined to 1991-2020 by subtracting the arithemtic mean for that period from all data values."
 history,CMEMS_SST,"Selected years within the range 1850 to 2025."
 reference,CMEMS_SST,"Mulet, S., Nardelli, B. B., Good, S., Pisano, A., Greiner, E., Monier, M., Autret, E., Axell, L., Boberg, F., and Ciliberti, S. (2018). Ocean temperature and salinity. In: Copernicus Marine Service Ocean State Report, Issue 2. Journal of Operational Oceanography, 11(Sup1), s11-s54. https://doi.org/10.1080/1755876X.2018.1489208."
 reference,CMEMS_SST,"Good, S. A., Kennedy, J. J., and Embury, O. (2020). Global sea surface temperature anomalies in 2018 and historical changes since 1993. In: von Schuckmann et al. 2020, Copernicus Marine Service Ocean State Report, Issue 4. Journal of Operational Oceanography, 13(sup1), S1-S172. https://doi.org/10.1080/1755876X.2020.1785097."
 comments,CMEMS_SST,"Original data acknowledgement: CMEMS SST data were obtained from the Copernicus Marine Service. Record the exact access date, product identifier, source service, and source filename used during processing."
-history,DCENT_SST_I,"Data set created from file ['DCENT_DCENT_I_OST_monthly_statistics.txt'] downloaded from ['manual:DCENT-I monthly ocean statistics source. Canonical landing page: https://doi.org/10.7910/DVN/ROG38Q. Place DCENT_DCENT_I_OST_monthly_statistics.txt under $DATADIR/ManagedData/SeaSurfaceTemperature/Data/DCENT-SST-I/.'] at ['2026-06-05 00:05:58']"
+history,DCENT_SST_I,"Data set created from file ['DCENT_DCENT_I_OST_monthly_statistics.txt'] downloaded from ['manual:DCENT-I monthly ocean statistics source. Canonical landing page: https://doi.org/10.7910/DVN/ROG38Q. Place DCENT_DCENT_I_OST_monthly_statistics.txt under $DATADIR/ManagedData/SeaSurfaceTemperature/Data/DCENT-SST-I/.'] at ['2026-06-05 18:45:30']"
 history,DCENT_SST_I,"Calculated annual average from monthly averages using arithmetic mean"
 history,DCENT_SST_I,"Rebaselined to 1991-2020 by subtracting the arithemtic mean for that period from all data values."
 history,DCENT_SST_I,"Selected years within the range 1850 to 2025."
@@ -32,14 +32,14 @@ history,DCENT_SST_I,"Attached DCENT-I annual 95% uncertainty from the retained a
 reference,DCENT_SST_I,"Chan, D., Gebbie, G., Huybers, P., and Kent, E. C. (2024). A Dynamically Consistent ENsemble of Temperature at the Earth Surface since 1850 from the DCENT dataset. Scientific Data, 11, 953. https://doi.org/10.1038/s41597-024-03742-x."
 reference,DCENT_SST_I,"Chan, D., Chan, S. C., Siddons, J. T., Cable, A., Cornes, R. C., Kent, E. C., Gebbie, G., and Huybers, P. (2026). DCENT-I: A Globally Infilled Extension of the Dynamically Consistent ENsemble of Temperature Dataset. Geoscience Data Journal. https://doi.org/10.1002/gdj3.70054."
 comments,DCENT_SST_I,"Original data acknowledgement: DCENT-I data were obtained from the DCENT-I project and Harvard Dataverse. Record the exact access date, source service, source file, and whether the file was obtained from Dataverse, CEDA, Google Cloud, or the project-provided ocean summary file."
-history,ERSST_v6,"Data set created from file ['aravg.mon.ocean.90S.90N.v6.0.0.202512.asc'] downloaded from ['https://www.ncei.noaa.gov/data/noaa-global-surface-temperature/v6/access/timeseries/aravg.mon.ocean.90S.90N.v6.0.0.202512.asc'] at ['2026-06-04 14:24:11']"
+history,ERSST_v6,"Data set created from file ['aravg.mon.ocean.90S.90N.v6.0.0.202512.asc'] downloaded from ['https://www.ncei.noaa.gov/data/noaa-global-surface-temperature/v6/access/timeseries/aravg.mon.ocean.90S.90N.v6.0.0.202512.asc'] at ['2026-06-05 18:48:51']"
 history,ERSST_v6,"Calculated annual average from monthly averages using arithmetic mean"
 history,ERSST_v6,"Rebaselined to 1991-2020 by subtracting the arithemtic mean for that period from all data values."
 history,ERSST_v6,"Selected years within the range 1850 to 2025."
 reference,ERSST_v6,"Huang, B., Yin, X., Boyer, T., Liu, C., Menne, M., Rao, Y. D., Smith, T., Vose, R., and Zhang, H.-M. (2025). Extended Reconstructed Sea Surface Temperature Version 6 (ERSSTv6): Part I. An Artificial Neural Network Approach. Journal of Climate, 38, 1105-1121. https://doi.org/10.1175/JCLI-D-23-0707.1."
 reference,ERSST_v6,"Huang, B., Yin, X., Boyer, T., Liu, C., Menne, M., Rao, Y. D., Smith, T., Vose, R., and Zhang, H.-M. (2025). Extended Reconstructed Sea Surface Temperature Version 6 (ERSSTv6): Part II. Upgrades on Quality Control and Large-scale Filter. Journal of Climate, 38, 1123-1136. https://doi.org/10.1175/JCLI-D-24-0185.1."
 comments,ERSST_v6,"Original data acknowledgement: NOAA ERSST v6 ocean time series data were obtained from NOAA National Centers for Environmental Information through the NOAA Global Surface Temperature Dataset, Version 6.0. Record the exact access date, version, source URLs, and filenames used during processing."
-history,HadSST4,"Data set created from file ['HadSST.4.2.0.0_monthly_GLOBE.csv'] downloaded from ['https://www.metoffice.gov.uk/hadobs/hadsst4/data/data/HadSST.4.2.0.0_monthly_GLOBE.csv'] at ['2026-06-04 14:24:09']"
+history,HadSST4,"Data set created from file ['HadSST.4.2.0.0_monthly_GLOBE.csv'] downloaded from ['https://www.metoffice.gov.uk/hadobs/hadsst4/data/data/HadSST.4.2.0.0_monthly_GLOBE.csv'] at ['2026-06-05 19:18:49']"
 history,HadSST4,"Calculated annual average from monthly averages using arithmetic mean"
 history,HadSST4,"Rebaselined to 1991-2020 by subtracting the arithemtic mean for that period from all data values."
 history,HadSST4,"Selected years within the range 1850 to 2025."
