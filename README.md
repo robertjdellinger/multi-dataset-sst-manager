@@ -173,7 +173,8 @@ instead of WMO regions, and never edits the upstream WMO scripts. Scripts under
   `calculate_sst_meow_ppow_averages.py` - thin CLI drivers; the latter writes the
   eligibility report `outputs/logs/qa/sst_gridded_regional_eligibility.csv`.
 - `plot_sst_gridded_diagnostics.py` - reads the prepared annual ERSST-v6 and
-  HadSST4 gridded NetCDF anomaly files from DATADIR and writes optional period
+  HadSST4 gridded NetCDF anomaly files from DATADIR, plus the optional
+  CMA-GMST ocean-only sensitivity NetCDF if it exists, and writes optional period
   mean maps, trend maps, valid-year maps, difference maps, and diagnostic tables
   under
   `$DATADIR/ManagedData/SeaSurfaceTemperature/Figures/gridded_diagnostics/`
@@ -189,6 +190,15 @@ instead of WMO regions, and never edits the upstream WMO scripts. Scripts under
   The current CMA cache is treated as CMA-GMST product 16 sensitivity material:
   it is not added to `gridded_pipeline/`, not treated as primary standalone
   CMA-SST, and not regionalized without an explicit ocean-separation method.
+- `prepare_cma_gmst_ocean_sensitivity.py` - reads the validated local CMA product
+  16 monthly NetCDF cache, applies the same Natural Earth ocean mask used by the
+  strict CMA fallback, annualizes complete monthly grids, rebases anomalies to
+  1991-2020, and writes a separately named sensitivity NetCDF under
+  `$DATADIR/ManagedData/SeaSurfaceTemperature/processed/gridded/`. This is a
+  **CMA-GMST ocean-only sensitivity product**, not primary standalone CMA-SST
+  gridded metadata. A final CMA-GMST ocean-separation method should use audited
+  fractional land-ocean weights, such as the ORNL DAAC ancillary mask described
+  above, before any formal regional interpretation.
 - `scripts/sea_surface_temperature/download_spatial_reference_data.sh` - fetch
   Natural Earth, create SST spatial-reference directories, point to the
   MEOW/PPOW download, and print manual ORNL DAAC / ISLSCP II ancillary mask
@@ -217,6 +227,8 @@ global workflow:
 `DATADIR="$HOME/data/multi-dataset-sst-manager" python scripts/sea_surface_temperature/calculate_sst_meow_ppow_averages.py`
 
 `DATADIR="$HOME/data/multi-dataset-sst-manager" python scripts/sea_surface_temperature/audit_cma_gridded_cache.py --strict --start-year 1850 --end-year 2025`
+
+`DATADIR="$HOME/data/multi-dataset-sst-manager" python scripts/sea_surface_temperature/prepare_cma_gmst_ocean_sensitivity.py --strict`
 
 `DATADIR="$HOME/data/multi-dataset-sst-manager" python scripts/sea_surface_temperature/plot_sst_gridded_diagnostics.py --strict`
 

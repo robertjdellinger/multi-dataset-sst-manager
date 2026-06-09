@@ -56,16 +56,44 @@ def test_discover_processed_gridded_files_finds_only_expected_datasets(monkeypat
     ersst = gridded_dir / "sst_ERSST-v6-gridded_annual_gridded_1850_2025_baseline_1991_2020.nc"
     hadsst = gridded_dir / "sst_HadSST4-gridded_annual_gridded_1850_2025_baseline_1991_2020.nc"
     ignored = gridded_dir / "sst_CMA-SST-gridded_annual_gridded_1850_2025_baseline_1991_2020.nc"
+    sensitivity = gridded_dir / "sst_CMA-GMST-ocean-sensitivity_annual_gridded_1850_2025_baseline_1991_2020.nc"
     ersst.touch()
     hadsst.touch()
     ignored.touch()
+    sensitivity.touch()
 
     discovered = module.discover_processed_gridded_files()
 
     assert discovered == {
         "ERSST-v6-gridded": ersst,
         "HadSST4-gridded": hadsst,
+        "CMA-GMST-ocean-sensitivity": sensitivity,
     }
+
+
+def test_run_diagnostics_requires_primary_inputs_but_not_cma_sensitivity(monkeypatch, tmp_path):
+    module = _load_module(monkeypatch, tmp_path)
+    gridded_dir = (
+        tmp_path
+        / "ManagedData"
+        / "SeaSurfaceTemperature"
+        / "processed"
+        / "gridded"
+    )
+    gridded_dir.mkdir(parents=True)
+    _annual_grid(years=(1991, 1992, 1993)).to_dataset(name="sst_anomaly_C").to_netcdf(
+        gridded_dir / "sst_ERSST-v6-gridded_annual_gridded_1991_1993_baseline_1991_2020.nc"
+    )
+    _annual_grid(years=(1991, 1992, 1993), missing=True).to_dataset(name="sst_anomaly_C").to_netcdf(
+        gridded_dir / "sst_HadSST4-gridded_annual_gridded_1991_1993_baseline_1991_2020.nc"
+    )
+    module.PERIOD_MEAN_PERIODS = {"1991_1993": (1991, 1993)}
+    module.TREND_PERIODS = {"1991_1993": (1991, 1993)}
+
+    result = module.run_diagnostics(strict=True)
+
+    assert result["status"] == "ok"
+    assert all("CMA-GMST-ocean-sensitivity" not in path for path in result["figures"])
 
 
 def test_period_selection_rejects_missing_period(monkeypatch, tmp_path):

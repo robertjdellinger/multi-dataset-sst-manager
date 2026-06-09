@@ -30,12 +30,20 @@ DATASETS = {
     "ERSST-v6-gridded": {
         "pattern": "sst_ERSST-v6-gridded_annual_gridded_*_baseline_1991_2020.nc",
         "label": "ERSST-v6",
+        "role": "primary_gridded_sst",
     },
     "HadSST4-gridded": {
         "pattern": "sst_HadSST4-gridded_annual_gridded_*_baseline_1991_2020.nc",
         "label": "HadSST4",
+        "role": "primary_gridded_sst",
+    },
+    "CMA-GMST-ocean-sensitivity": {
+        "pattern": "sst_CMA-GMST-ocean-sensitivity_annual_gridded_*_baseline_1991_2020.nc",
+        "label": "CMA-GMST ocean sensitivity",
+        "role": "sensitivity_gridded_gmst_ocean_only",
     },
 }
+REQUIRED_DATASETS = {"ERSST-v6-gridded", "HadSST4-gridded"}
 PERIOD_MEAN_PERIODS = {
     "1850_1900": (1850, 1900),
     "1901_1950": (1901, 1950),
@@ -76,7 +84,7 @@ def gridded_table_dir() -> Path:
 
 
 def discover_processed_gridded_files() -> dict[str, Path]:
-    """Find prepared annual gridded files for the approved gridded datasets only."""
+    """Find prepared annual gridded files for approved primary/sensitivity datasets."""
     directory = processed_gridded_dir()
     discovered: dict[str, Path] = {}
     if not directory.exists():
@@ -264,6 +272,7 @@ def write_inventory_table(grids: dict[str, xr.DataArray], files: dict[str, Path]
         rows.append(
             {
                 "dataset": dataset,
+                "dataset_role": DATASETS[dataset]["role"],
                 "source_file": str(files[dataset]),
                 "variable": DATA_VARIABLE,
                 "year_start": int(data["year"].values.min()),
@@ -293,7 +302,7 @@ def write_summary_table(rows: list[dict[str, object]]) -> Path:
 
 def run_diagnostics(strict: bool = False) -> dict[str, object]:
     files = discover_processed_gridded_files()
-    missing = sorted(set(DATASETS) - set(files))
+    missing = sorted(REQUIRED_DATASETS - set(files))
     if missing:
         message = "Missing prepared gridded input(s): " + ", ".join(missing)
         if strict:
@@ -334,6 +343,7 @@ def run_diagnostics(strict: bool = False) -> dict[str, object]:
             summary_rows.append(
                 {
                     "dataset": dataset,
+                    "dataset_role": DATASETS[dataset]["role"],
                     "diagnostic": "period_mean",
                     "period": f"{start_year}-{end_year}",
                     "spatial_mean": cosine_weighted_spatial_mean(mean),
@@ -344,6 +354,7 @@ def run_diagnostics(strict: bool = False) -> dict[str, object]:
             summary_rows.append(
                 {
                     "dataset": dataset,
+                    "dataset_role": DATASETS[dataset]["role"],
                     "diagnostic": "valid_year_fraction",
                     "period": f"{start_year}-{end_year}",
                     "spatial_mean": cosine_weighted_spatial_mean(valid_fraction),
@@ -366,6 +377,7 @@ def run_diagnostics(strict: bool = False) -> dict[str, object]:
             summary_rows.append(
                 {
                     "dataset": dataset,
+                    "dataset_role": DATASETS[dataset]["role"],
                     "diagnostic": "linear_trend",
                     "period": f"{start_year}-{end_year}",
                     "spatial_mean": cosine_weighted_spatial_mean(trend),
@@ -390,6 +402,7 @@ def run_diagnostics(strict: bool = False) -> dict[str, object]:
         summary_rows.append(
             {
                 "dataset": "ERSST-v6-gridded_minus_HadSST4-gridded",
+                "dataset_role": "primary_gridded_sst_difference",
                 "diagnostic": "period_mean_difference",
                 "period": f"{start_year}-{end_year}",
                 "spatial_mean": cosine_weighted_spatial_mean(difference),
