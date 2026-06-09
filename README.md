@@ -172,6 +172,23 @@ instead of WMO regions, and never edits the upstream WMO scripts. Scripts under
 - `prepare_sst_gridded_inputs.py`, `make_meow_ppow_region_masks.py`,
   `calculate_sst_meow_ppow_averages.py` - thin CLI drivers; the latter writes the
   eligibility report `outputs/logs/qa/sst_gridded_regional_eligibility.csv`.
+- `plot_sst_gridded_diagnostics.py` - reads the prepared annual ERSST-v6 and
+  HadSST4 gridded NetCDF anomaly files from DATADIR and writes optional period
+  mean maps, trend maps, valid-year maps, difference maps, and diagnostic tables
+  under
+  `$DATADIR/ManagedData/SeaSurfaceTemperature/Figures/gridded_diagnostics/`
+  and
+  `$DATADIR/ManagedData/SeaSurfaceTemperature/processed/gridded_diagnostics/`.
+  It does not read or modify the six required global CSV outputs.
+- `audit_cma_gridded_cache.py` - inspects the local CMA CMDC API NetCDF cache
+  under `$DATADIR/ManagedData/SeaSurfaceTemperature/Data/CMA-SST/cma_api_raw/`
+  and writes
+  `$DATADIR/ManagedData/SeaSurfaceTemperature/logs/qa/cma_gridded_cache_inventory.csv`
+  and
+  `$DATADIR/ManagedData/SeaSurfaceTemperature/logs/qa/cma_gridded_cache_summary.csv`.
+  The current CMA cache is treated as CMA-GMST product 16 sensitivity material:
+  it is not added to `gridded_pipeline/`, not treated as primary standalone
+  CMA-SST, and not regionalized without an explicit ocean-separation method.
 - `scripts/sea_surface_temperature/download_spatial_reference_data.sh` - fetch
   Natural Earth, create SST spatial-reference directories, point to the
   MEOW/PPOW download, and print manual ORNL DAAC / ISLSCP II ancillary mask
@@ -198,6 +215,10 @@ global workflow:
 `DATADIR="$HOME/data/multi-dataset-sst-manager" python scripts/sea_surface_temperature/prepare_sst_gridded_inputs.py --eligibility-only`
 
 `DATADIR="$HOME/data/multi-dataset-sst-manager" python scripts/sea_surface_temperature/calculate_sst_meow_ppow_averages.py`
+
+`DATADIR="$HOME/data/multi-dataset-sst-manager" python scripts/sea_surface_temperature/audit_cma_gridded_cache.py --strict --start-year 1850 --end-year 2025`
+
+`DATADIR="$HOME/data/multi-dataset-sst-manager" python scripts/sea_surface_temperature/plot_sst_gridded_diagnostics.py --strict`
 
 BHM paleo reconstruction (deferred)
 -----------------------------------
