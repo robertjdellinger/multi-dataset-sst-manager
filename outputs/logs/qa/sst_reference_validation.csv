@@ -1,7 +1,7 @@
 file,status,columns_match,rows_match,output_rows,reference_rows,output_year_min,output_year_max,reference_year_min,reference_year_max,max_abs_diff,applied_tolerance,exceeded,note
 sst_CMA_SST.csv,ok,True,True,176,176,1850,2025,1850,2025,0.1771999999999999,0.2,,Compared data block only; metadata dates and byte identity are not required to match.
 sst_CMEMS_SST.csv,ok,True,True,43,43,1982,2024,1982,2024,0.0,0.01,,Compared data block only; metadata dates and byte identity are not required to match.
-sst_DCENT_SST_I.csv,ok,True,True,176,176,1850,2025,1850,2025,0.010000000000000009,0.01,,Compared data block only; metadata dates and byte identity are not required to match.
+sst_DCENT_SST_I.csv,ok,True,True,176,176,1850,2025,1850,2025,0.008900000000000019,0.01,,Compared data block only; metadata dates and byte identity are not required to match.
 sst_ERSST_v6.csv,ok,True,True,176,176,1850,2025,1850,2025,0.0032999999999999696,0.01,,Compared data block only; metadata dates and byte identity are not required to match.
 sst_HadSST4.csv,ok,True,True,176,176,1850,2025,1850,2025,0.0005000000000000004,0.01,,Compared data block only; metadata dates and byte identity are not required to match.
 sst_summary.csv,ok,True,True,176,176,1850,2025,1850,2025,0.1771999999999999,0.2,,Compared data block only; metadata dates and byte identity are not required to match.

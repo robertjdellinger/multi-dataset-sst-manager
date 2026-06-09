@@ -153,10 +153,14 @@ def test_write_annual_diagnostic_suite_creates_expected_outputs(monkeypatch, tmp
 
     figure_paths, table_paths = module.write_annual_diagnostic_suite(frame)
 
-    assert len(figure_paths) == 8
+    assert len(figure_paths) == 9
     assert len(table_paths) == 7
     assert all(path.exists() for path in figure_paths)
     assert all(path.exists() for path in table_paths)
+    assert any(
+        path.name == "sst_annual_dataset_availability_and_validation_summary.png"
+        for path in figure_paths
+    )
     assert (
         tmp_path
         / "ManagedData"

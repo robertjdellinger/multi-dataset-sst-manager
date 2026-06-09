@@ -62,6 +62,14 @@ STRICT_OUTPUT_FILES = {
     "ERSSTv6": OUTPUT_TABLE_DIR / "sst_ERSST_v6.csv",
     "HadSST4": OUTPUT_TABLE_DIR / "sst_HadSST4.csv",
 }
+VALIDATION_FILE_TO_DATASET = {
+    "sst_CMA_SST.csv": "CMA-SST",
+    "sst_CMEMS_SST.csv": "CMEMS",
+    "sst_DCENT_SST_I.csv": "DCENT-I",
+    "sst_ERSST_v6.csv": "ERSSTv6",
+    "sst_HadSST4.csv": "HadSST4",
+}
+REFERENCE_VALIDATION_CSV = PROJECT_ROOT / "outputs" / "logs" / "qa" / "sst_reference_validation.csv"
 DIAGNOSTIC_PERIODS = {
     "1850-2025": (1850, 2025),
     "1900-2025": (1900, 2025),
@@ -302,6 +310,26 @@ def calculate_availability_table(df: pd.DataFrame) -> pd.DataFrame:
             }
         )
     return pd.DataFrame(rows)
+
+
+def read_reference_validation_summary() -> pd.DataFrame:
+    """Read strict reference-validation QA rows for the five dataset CSVs."""
+    if not REFERENCE_VALIDATION_CSV.exists():
+        raise FileNotFoundError(
+            f"Missing strict reference-validation table: {REFERENCE_VALIDATION_CSV}. "
+            "Run scripts/data_management/build_sst_outputs.py --strict before plotting diagnostics."
+        )
+    validation = pd.read_csv(REFERENCE_VALIDATION_CSV)
+    required_columns = {"file", "status", "max_abs_diff", "applied_tolerance"}
+    missing = sorted(required_columns.difference(validation.columns))
+    if missing:
+        raise ValueError(
+            "Strict reference-validation table is missing required column(s): "
+            + ", ".join(missing)
+        )
+    validation = validation[validation["file"].isin(VALIDATION_FILE_TO_DATASET)].copy()
+    validation["dataset"] = validation["file"].replace(VALIDATION_FILE_TO_DATASET)
+    return validation
 
 
 def calculate_baseline_offsets(df: pd.DataFrame) -> pd.DataFrame:
@@ -769,6 +797,111 @@ def plot_source_spread(df: pd.DataFrame) -> plt.Figure:
     return fig
 
 
+def plot_dataset_availability_and_validation_summary(
+    availability: pd.DataFrame,
+    validation: pd.DataFrame,
+) -> plt.Figure:
+    """Summarize row coverage and reference-validation status for strict annual outputs."""
+    summary = availability.merge(
+        validation[["dataset", "status", "max_abs_diff", "applied_tolerance"]],
+        on="dataset",
+        how="left",
+    )
+    summary["dataset"] = pd.Categorical(summary["dataset"], categories=DATASET_LEVELS, ordered=True)
+    summary = summary.sort_values("dataset").reset_index(drop=True)
+
+    fig, (coverage_ax, table_ax) = plt.subplots(
+        1,
+        2,
+        figsize=(14.2, 6.8),
+        dpi=120,
+        gridspec_kw={"width_ratios": [1.2, 1.8]},
+    )
+    y = np.arange(len(summary))
+    colors = [DATASET_COLORS[str(dataset)] for dataset in summary["dataset"]]
+    coverage_ax.barh(y, summary["valid_years"], color=colors, alpha=0.88)
+    coverage_ax.set_yticks(y)
+    coverage_ax.set_yticklabels([DISPLAY_NAMES[str(dataset)] for dataset in summary["dataset"]], fontsize=11)
+    coverage_ax.invert_yaxis()
+    coverage_ax.set_xlabel("Annual rows", fontsize=11)
+    coverage_ax.set_title(
+        "Dataset availability",
+        fontsize=16,
+        loc="left",
+        color="#444444",
+    )
+    coverage_ax.set_xlim(0, max(180, int(summary["valid_years"].max()) + 10))
+    for index, row in summary.iterrows():
+        coverage_ax.text(
+            row["valid_years"] + 3,
+            index,
+            f"{int(row['first_year'])}-{int(row['last_year'])}",
+            va="center",
+            fontsize=10,
+            color="#444444",
+        )
+    set_reference_style(coverage_ax)
+
+    table_ax.axis("off")
+    table_rows = []
+    for row in summary.itertuples(index=False):
+        table_rows.append(
+            [
+                DISPLAY_NAMES[str(row.dataset)],
+                f"{int(row.valid_years)}",
+                f"{int(row.first_year)}-{int(row.last_year)}",
+                f"{float(row.max_abs_diff):.4f}",
+                f"{float(row.applied_tolerance):.2f}",
+                str(row.status),
+            ]
+        )
+    table = table_ax.table(
+        cellText=table_rows,
+        colLabels=["Product", "Rows", "Years", "Max diff", "Tol.", "Status"],
+        loc="center",
+        cellLoc="center",
+        colLoc="center",
+    )
+    table.auto_set_font_size(False)
+    table.set_fontsize(9.5)
+    table.scale(1.0, 1.55)
+    for (row, column), cell in table.get_celld().items():
+        cell.set_edgecolor("#DDDDDD")
+        if row == 0:
+            cell.set_facecolor("#F0F0F0")
+            cell.set_text_props(weight="bold", color="#333333")
+        elif column == 5:
+            cell.set_facecolor("#EAF4EA" if cell.get_text().get_text() == "ok" else "#F8E6E6")
+    table_ax.set_title(
+        "Reference-validation status",
+        fontsize=16,
+        loc="left",
+        color="#444444",
+        pad=18,
+    )
+
+    fig.suptitle(
+        "Strict annual SST availability and validation summary",
+        x=0.055,
+        y=0.98,
+        ha="left",
+        fontsize=20,
+        color="#444444",
+    )
+    fig.text(
+        0.055,
+        0.035,
+        "Annual SST anomalies relative to 1991-2020. CMA-SST, DCENT-I, ERSST-v6, and HadSST4 cover "
+        "1850-2025; CMEMS covers the satellite-era 1982-2024 source interval.",
+        ha="left",
+        va="bottom",
+        fontsize=10,
+        color="#555555",
+    )
+    fig.tight_layout(rect=[0, 0.07, 1, 0.94])
+    return fig
+
+
 def write_annual_diagnostic_suite(df: pd.DataFrame) -> tuple[list[Path], list[Path]]:
     """Write annual diagnostic tables and figures from the strict annual CSV data."""
     table_paths: list[Path] = []
@@ -781,6 +914,7 @@ def write_annual_diagnostic_suite(df: pd.DataFrame) -> tuple[list[Path], list[Pa
     spread = calculate_source_spread(df)
     rolling = calculate_rolling_differences(df)
     trends = calculate_trend_estimates(df)
+    validation = read_reference_validation_summary()
 
     table_paths.append(write_diagnostic_table(availability, "sst_annual_dataset_availability.csv"))
     table_paths.append(write_diagnostic_table(offsets, "sst_annual_baseline_offsets.csv"))
@@ -791,6 +925,12 @@ def write_annual_diagnostic_suite(df: pd.DataFrame) -> tuple[list[Path], list[Pa
     table_paths.append(write_diagnostic_table(trends, "sst_annual_period_trends.csv"))
 
     figure_paths.append(save_diagnostic_figure(plot_source_coverage(df), "sst_annual_source_coverage.png"))
+    figure_paths.append(
+        save_diagnostic_figure(
+            plot_dataset_availability_and_validation_summary(availability, validation),
+            "sst_annual_dataset_availability_and_validation_summary.png",
+        )
+    )
     figure_paths.append(save_diagnostic_figure(plot_baseline_sensitivity(offsets), "sst_annual_baseline_sensitivity.png"))
     figure_paths.append(save_diagnostic_figure(plot_pairwise_residual_heatmap(pairwise_residuals), "sst_annual_pairwise_residual_heatmap.png"))
     figure_paths.append(save_diagnostic_figure(plot_period_trend_comparison(trends), "sst_annual_period_trend_comparison.png"))

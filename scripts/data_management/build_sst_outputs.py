@@ -65,6 +65,7 @@ SST_METADATA_FILES = [
     SST_PIPELINE_METADATA_DIR / "hadsst4.json",
 ]
 LEGACY_RAW_SOURCE_DIR = PROJECT_ROOT / "data" / "raw" / "sst_sources"
+LOCAL_RAW_SOURCE_DIR = PROJECT_ROOT / "data" / "raw" / "sst-data"
 REFERENCE_DIR = PROJECT_ROOT / "data" / "raw" / "reference"
 REFERENCE_ZIP = REFERENCE_DIR / "Sea-surface_temperature_data_files.zip"
 OUTPUT_DIR = PROJECT_ROOT / "outputs" / "tables"
@@ -108,10 +109,11 @@ SOURCE_DIR_NAMES = {
     "ERSST-v6": "ERSST-v6",
     "HadSST4-SST": "HadSST4-SST",
 }
+DCENT_ANNUAL_CROSSCHECK_FILENAME = "annual_statistics/DCENT_DCENT_I_OST_annual_statistics_embargo.txt"
 PROCESSING_SELECT = {
     "CMA-SST": {"time_resolution": "monthly"},
     "CMEMS-SST": {"time_resolution": "monthly"},
-    "DCENT-SST-I": {"time_resolution": "annual"},
+    "DCENT-SST-I": {"time_resolution": "monthly"},
     "ERSST-v6": {"time_resolution": "monthly"},
     "HadSST4-SST": {"time_resolution": "monthly"},
 }
@@ -119,6 +121,13 @@ SUMMARY_OUTPUT_NAME = "sst_summary.csv"
 MERGED_OUTPUT_NAME = "merged_global_sst_reconstructions_annual_1850_2025_baseline_1991_2020.csv"
 FIGURE_OUTPUT_NAME = "global_sea_surface_temperature_1850_2025_reference_style.png"
 BASELINE_AUDIT_NAME = "sst_baseline_audit.csv"
+QA_ARTIFACT_NAMES = [
+    "sst_source_acquisition_log.csv",
+    "sst_processing_log.csv",
+    BASELINE_AUDIT_NAME,
+    "sst_reference_validation.csv",
+    "sst_workflow_summary.json",
+]
 TARGET_CLIMATOLOGY = (1991, 2020)
 TARGET_YEAR_RANGE = (1850, 2025)
 
@@ -129,6 +138,16 @@ DATASET_VALIDATION_TOLERANCES = {"CMA-SST": CMA_VALIDATION_TOLERANCE}
 OUTPUT_TO_DATASET = {output: dataset for dataset, output in OUTPUT_NAMES.items()}
 SUMMARY_COLUMN_TO_DATASET = {column: dataset for dataset, column in SUMMARY_COLUMN_NAMES.items()}
 METADATA_FILE_BY_DATASET = dict(zip(DATASET_ORDER, SST_METADATA_FILES))
+DCENT_MONTHLY_SOURCE_NOTE = (
+    "manual:DCENT-I monthly ocean statistics source. Canonical landing page: "
+    "https://doi.org/10.7910/DVN/ROG38Q. Place DCENT_DCENT_I_OST_monthly_statistics.txt "
+    "under $DATADIR/ManagedData/SeaSurfaceTemperature/Data/DCENT-SST-I/."
+)
+DCENT_ANNUAL_SOURCE_NOTE = (
+    "manual:DCENT-I annual ocean statistics cross-check source. Canonical landing page: "
+    "https://doi.org/10.7910/DVN/ROG38Q. Place DCENT_DCENT_I_OST_annual_statistics_embargo.txt "
+    "under $DATADIR/ManagedData/SeaSurfaceTemperature/Data/DCENT-SST-I/annual_statistics/."
+)
 SOURCE_FAILURE_STATUSES = {
     "source_missing",
     "source_missing_sdk",
@@ -161,13 +180,11 @@ DIRECT_DOWNLOADS = {
     ],
     "DCENT-SST-I": [
         (
-            "https://www.dropbox.com/scl/fi/aum9bnz22o69ysoovqwy5/"
-            "DCENT_DCENT_I_OST_monthly_statistics.txt?rlkey=tzqz53wmkr1np2uh6pfrr88re&st=hf0r0r1y&dl=1",
-            "monthly/DCENT_DCENT_I_OST_monthly_statistics.txt",
+            DCENT_MONTHLY_SOURCE_NOTE,
+            "DCENT_DCENT_I_OST_monthly_statistics.txt",
         ),
         (
-            "https://www.dropbox.com/scl/fi/nxhtud84wxvvkfgrelwsq/"
-            "DCENT_DCENT_I_OST_annual_statistics.txt?rlkey=w0q6eot2hjfcbfc84hda8nvw4&st=jdqccqw3&dl=1",
+            DCENT_ANNUAL_SOURCE_NOTE,
             "annual_statistics/DCENT_DCENT_I_OST_annual_statistics_embargo.txt",
         ),
     ],
@@ -224,6 +241,22 @@ def redact_sensitive_text(value: object) -> str:
     return re.sub(r"(userId=)[^&\\s)]+", r"\1<CMA_USER_ID>", text)
 
 
+def display_source_path(path: Path) -> str:
+    """Return a reproducible display path for local source files."""
+    resolved = Path(path).resolve()
+    try:
+        relative = resolved.relative_to(managed_sst_data_dir().resolve())
+        return f"$DATADIR/ManagedData/SeaSurfaceTemperature/Data/{relative.as_posix()}"
+    except ValueError:
+        pass
+    try:
+        relative = resolved.relative_to(LOCAL_RAW_SOURCE_DIR.resolve())
+        return f"data/raw/sst-data/{relative.as_posix()}"
+    except ValueError:
+        pass
+    return str(path)
+
+
 def ensure_direct_file(url: str, destination: Path) -> Dict[str, object]:
     destination.parent.mkdir(parents=True, exist_ok=True)
     if destination.exists():
@@ -240,10 +273,20 @@ def ensure_direct_file(url: str, destination: Path) -> Dict[str, object]:
         shutil.copy2(existing, destination)
         return {
             "filename": destination.name,
-            "source_url": str(existing),
+            "source_url": display_source_path(existing),
             "status": "copied_from_existing_raw_source",
             "bytes": destination.stat().st_size,
             "sha256": sha256(destination),
+        }
+
+    if str(url).startswith("manual:"):
+        return {
+            "filename": destination.name,
+            "source_url": url,
+            "status": "source_missing",
+            "bytes": 0,
+            "sha256": "",
+            "reason": f"Manual source file is missing: {destination}. {url}",
         }
 
     fetch_with_retries(url, destination.parent, destination.name)
@@ -269,13 +312,76 @@ def managed_sst_data_dir() -> Path:
 
 
 def find_existing_raw_source(filename: str) -> Optional[Path]:
-    search_roots = [managed_sst_data_dir(), LEGACY_RAW_SOURCE_DIR]
+    search_roots = [managed_sst_data_dir(), LOCAL_RAW_SOURCE_DIR, LEGACY_RAW_SOURCE_DIR]
     for root in search_roots:
         if root.exists():
             for candidate in root.rglob(Path(filename).name):
                 if candidate.is_file():
                     return candidate
     return None
+
+
+def dcent_annual_crosscheck_path() -> Optional[Path]:
+    """Return the retained DCENT-I annual statistics file, if available."""
+    preferred = managed_sst_data_dir() / SOURCE_DIR_NAMES["DCENT-SST-I"] / DCENT_ANNUAL_CROSSCHECK_FILENAME
+    if preferred.exists():
+        return preferred
+    return find_existing_raw_source(Path(DCENT_ANNUAL_CROSSCHECK_FILENAME).name)
+
+
+def read_dcent_annual_uncertainty(path: Path) -> pd.DataFrame:
+    """Read DCENT-I annual 95% uncertainty from the retained annual statistics file.
+
+    The DCENT-I anomaly data column in the strict output is derived from the
+    monthly ocean-statistics source. This helper reads only the annual standard
+    deviation column retained for reference-style BADC output compatibility.
+    """
+    records = []
+    with path.open("r", encoding="utf-8") as handle:
+        for _ in range(8):
+            handle.readline()
+        for line in handle:
+            columns = [column.strip() for column in line.split(",")]
+            if len(columns) < 3:
+                continue
+            try:
+                year = int(columns[0])
+                one_sigma = float(columns[2])
+            except ValueError:
+                continue
+            records.append({"year": year, "uncertainty": one_sigma * 1.96})
+            if year == TARGET_YEAR_RANGE[1]:
+                break
+
+    uncertainty = pd.DataFrame(records)
+    if uncertainty.empty:
+        raise RuntimeError(f"DCENT-I annual uncertainty source contains no parseable rows: {path}")
+    return uncertainty
+
+
+def attach_dcent_annual_uncertainty_from_crosscheck(dataset: TimeSeriesAnnual) -> Optional[Path]:
+    """Attach retained DCENT-I annual uncertainty without replacing monthly-derived data."""
+    source_path = dcent_annual_crosscheck_path()
+    if source_path is None:
+        return None
+
+    uncertainty = read_dcent_annual_uncertainty(source_path)
+    original = dataset.df.copy()
+    merged = original.merge(uncertainty, on="year", how="left")
+    missing = merged[merged["uncertainty"].isna()]["year"].tolist()
+    if missing:
+        examples = ", ".join(str(int(year)) for year in missing[:10])
+        raise RuntimeError(
+            "DCENT-I retained annual uncertainty source does not cover all monthly-derived "
+            f"annual output years ({examples})."
+        )
+
+    dataset.df = merged
+    dataset.update_history(
+        "Attached DCENT-I annual 95% uncertainty from the retained annual ocean-statistics "
+        f"cross-check file {display_source_path(source_path)}; monthly-derived data values were not replaced."
+    )
+    return source_path
 
 
 def cmdcapi_available() -> bool:
@@ -304,7 +410,7 @@ def ensure_cma_api_file(dataset_name: str, url: str, filename: str, reason: str)
         shutil.copy2(existing, destination)
         return {
             "filename": destination.name,
-            "source_url": str(existing),
+            "source_url": display_source_path(existing),
             "status": "copied_from_existing_raw_source",
             "bytes": destination.stat().st_size,
             "sha256": sha256(destination),
@@ -508,6 +614,7 @@ def build_baseline_audit_record(
     annualization_method: str,
     monthly_coverage_fraction: Optional[float] = None,
     source_metadata: Optional[Dict[str, object]] = None,
+    uncertainty_source_path: Optional[Path] = None,
 ) -> Dict[str, object]:
     metadata = source_metadata if source_metadata is not None else source_dataset.metadata
     source_value_type = resolve_source_value_type(metadata)
@@ -524,7 +631,7 @@ def build_baseline_audit_record(
         urls = [urls]
     source_dir_name = SOURCE_DIR_NAMES.get(dataset_name, dataset_name)
     managed_inputs = [
-        str(managed_sst_data_dir() / source_dir_name / Path(filename))
+        display_source_path(managed_sst_data_dir() / source_dir_name / Path(filename))
         for filename in filenames
     ]
 
@@ -542,6 +649,7 @@ def build_baseline_audit_record(
         "fetcher": metadata_get(metadata, "fetcher", ""),
         "reader": metadata_get(metadata, "reader", ""),
         "managed_input_path": ";".join(managed_inputs),
+        "uncertainty_source_path": display_source_path(uncertainty_source_path) if uncertainty_source_path else "",
         "type": metadata_get(metadata, "type", ""),
         "time_resolution": metadata_get(metadata, "time_resolution", ""),
         "space_resolution": metadata_get(metadata, "space_resolution", ""),
@@ -591,6 +699,9 @@ def process_dataset(collection: dm.DataCollection, dataset_name: str, output_nam
         )
     dataset.rebaseline(*TARGET_CLIMATOLOGY)
     dataset.select_year_range(*TARGET_YEAR_RANGE)
+    uncertainty_source_path = None
+    if dataset_name == "DCENT-SST-I":
+        uncertainty_source_path = attach_dcent_annual_uncertainty_from_crosscheck(dataset)
     audit_record = build_baseline_audit_record(
         dataset_name=dataset_name,
         output_name=output_name,
@@ -600,6 +711,7 @@ def process_dataset(collection: dm.DataCollection, dataset_name: str, output_nam
         annualization_method=annualization_method,
         monthly_coverage_fraction=monthly_coverage_fraction,
         source_metadata=source_metadata,
+        uncertainty_source_path=uncertainty_source_path,
     )
     return dataset, audit_record
 
@@ -835,7 +947,8 @@ def _required_output_files() -> list[str]:
 
 def _replace_final_outputs_from_temp(temp_output_dir: Path, final_output_dir: Path) -> None:
     """Replace final SST CSV outputs only after the temporary build is complete."""
-    missing = [name for name in _required_output_files() if not (temp_output_dir / name).exists()]
+    expected_names = _required_output_files()
+    missing = [name for name in expected_names if not (temp_output_dir / name).exists()]
     if missing:
         raise RuntimeError(
             "Temporary SST build did not produce all required outputs: "
@@ -843,8 +956,29 @@ def _replace_final_outputs_from_temp(temp_output_dir: Path, final_output_dir: Pa
         )
 
     final_output_dir.mkdir(parents=True, exist_ok=True)
-    for name in _required_output_files():
-        shutil.copy2(temp_output_dir / name, final_output_dir / name)
+    backup_dir = final_output_dir.parent / f".{final_output_dir.name}.backup_for_atomic_replace.{os.getpid()}"
+    if backup_dir.exists():
+        shutil.rmtree(backup_dir)
+    backup_dir.mkdir(parents=True)
+    existing = []
+    for name in expected_names:
+        destination = final_output_dir / name
+        if destination.exists():
+            shutil.copy2(destination, backup_dir / name)
+            existing.append(name)
+    try:
+        for name in expected_names:
+            shutil.copy2(temp_output_dir / name, final_output_dir / name)
+    except Exception:
+        for name in expected_names:
+            destination = final_output_dir / name
+            if destination.exists():
+                destination.unlink()
+        for name in existing:
+            shutil.copy2(backup_dir / name, final_output_dir / name)
+        raise
+    finally:
+        shutil.rmtree(backup_dir, ignore_errors=True)
 
 
 def _rewrite_temp_paths_in_qa(temp_output_dir: Path, final_output_dir: Path) -> None:
@@ -860,6 +994,26 @@ def _rewrite_temp_paths_in_qa(temp_output_dir: Path, final_output_dir: Path) -> 
         path.write_text(text.replace(str(temp_output_dir), str(final_output_dir)), encoding="utf-8")
 
 
+def _snapshot_qa_artifacts() -> dict[Path, bytes | None]:
+    """Capture existing strict-workflow QA artifacts before a temporary build."""
+    snapshot: dict[Path, bytes | None] = {}
+    for name in QA_ARTIFACT_NAMES:
+        path = QA_DIR / name
+        snapshot[path] = path.read_bytes() if path.exists() else None
+    return snapshot
+
+
+def _restore_qa_artifacts(snapshot: dict[Path, bytes | None]) -> None:
+    """Restore strict-workflow QA artifacts after a failed temporary build."""
+    for path, contents in snapshot.items():
+        if contents is None:
+            if path.exists():
+                path.unlink()
+            continue
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(contents)
+
+
 def build_outputs(allow_partial: bool) -> int:
     if allow_partial:
         return _build_outputs_current_dir(allow_partial=True)
@@ -870,10 +1024,12 @@ def build_outputs(allow_partial: bool) -> int:
         shutil.rmtree(temp_output_dir)
 
     original_output_dir = OUTPUT_DIR
+    qa_snapshot = _snapshot_qa_artifacts()
     try:
         globals()["OUTPUT_DIR"] = temp_output_dir
         result = _build_outputs_current_dir(allow_partial=False)
         if result != 0:
+            _restore_qa_artifacts(qa_snapshot)
             return result
 
         _replace_final_outputs_from_temp(temp_output_dir, final_output_dir)
@@ -885,9 +1041,13 @@ def build_outputs(allow_partial: bool) -> int:
                 "SST workflow produced outputs with validation differences after final replacement. "
                 "See outputs/logs/qa/sst_reference_validation.csv."
             )
+            _restore_qa_artifacts(qa_snapshot)
             return 1
         _rewrite_temp_paths_in_qa(temp_output_dir, final_output_dir)
         return 0
+    except Exception:
+        _restore_qa_artifacts(qa_snapshot)
+        raise
     finally:
         globals()["OUTPUT_DIR"] = original_output_dir
         if temp_output_dir.exists():
